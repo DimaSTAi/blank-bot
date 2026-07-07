@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    container_name: blank-bot
+    env_file:
+      - .env
+    volumes:
+      - ./app/data:/app/app/data
+    restart: unless-stopped
+    ports:
+      - "8080:8080"

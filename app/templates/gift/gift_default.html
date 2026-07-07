@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Договор дарения</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.5; }
+        h1 { text-align: center; font-size: 18px; margin-bottom: 8px; }
+        .subtitle { text-align: center; margin-bottom: 24px; }
+        p { margin: 12px 0; }
+        .section { margin-top: 18px; }
+        .sign { margin-top: 40px; }
+        .sign-row { display: flex; justify-content: space-between; margin-top: 30px; }
+        .sign-box { width: 45%; }
+    </style>
+</head>
+<body>
+    <h1>ДОГОВОР ДАРЕНИЯ</h1>
+    <p class="subtitle">г. {{ data.city }} «{{ data.date }}»</p>
+
+    <p><strong>Даритель:</strong> {{ data.donor_name }}</p>
+    <p><strong>Одаряемый:</strong> {{ data.donee_name }}</p>
+
+    <div class="section">
+        <p><strong>1. Предмет договора</strong></p>
+        <p>Даритель безвозмездно передаёт Одаряемому имущество: <strong>{{ data.gift_name }}</strong>.</p>
+        <p><strong>Описание:</strong> {{ data.gift_description }}.</p>
+    </div>
+
+    <div class="section">
+        <p><strong>2. Права и обязанности сторон</strong></p>
+        <p>Даритель подтверждает, что переданное имущество принадлежит ему, не находится в залоге, аресте и не является предметом спора третьих лиц.</p>
+        <p>Одаряемый принимает дар и имущество в состоянии на момент подписания настоящего договора.</p>
+    </div>
+
+    <div class="section">
+        <p><strong>3. Заключительные положения</strong></p>
+        <p>Настоящий договор составлен в двух экземплярах, по одному для каждой стороны. Стороны подтверждают, что условия договора им понятны, и они действуют добровольно.</p>
+    </div>
+
+    <div class="sign">
+        <div class="sign-row">
+            <div class="sign-box">
+                <p><strong>Даритель</strong></p>
+                <p>________________ / {{ data.donor_name }}</p>
+            </div>
+            <div class="sign-box">
+                <p><strong>Одаряемый</strong></p>
+                <p>________________ / {{ data.donee_name }}</p>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top: 40px; font-size: 10px; color: #555;">Сформировано автоматически ботом «Бланк-бот».</p>
+</body>
+</html>

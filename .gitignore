@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.env
+.env.*
+!.env.example
+
+# Telegram bot token and secrets
+*.key
+*.pem
+
+# Generated user PDFs (contain personal data)
+app/data/*.pdf
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker local volumes
+postgres_data/
