@@ -15,9 +15,9 @@ PROXY_URL = os.getenv("PROXY_URL", "")
 YOOKASSA_TEST_MODE = os.getenv("YOOKASSA_TEST_MODE", "true").lower() in ("true", "1", "yes")
 
 # Цены по категориям документов (используются в catalog.py)
-DKP_PRICE = 150
-RENT_PRICE = 150
-RECEIPT_PRICE = 150
-CLAIM_PRICE = 150
+DKP_PRICE = 180
+RENT_PRICE = 180
+RECEIPT_PRICE = 180
+CLAIM_PRICE = 180
 ACT_PRICE = 180
-GIFT_PRICE = 150
+GIFT_PRICE = 180
