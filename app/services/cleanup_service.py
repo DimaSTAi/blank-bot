@@ -6,6 +6,8 @@ PDF_RETENTION_DAYS = 3
 
 def cleanup_old_pdfs(directory: str = "app/data", retention_days: int = PDF_RETENTION_DAYS) -> int:
     """Удаляет PDF-файлы старше retention_days дней. Возвращает количество удалённых файлов."""
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
     now = time.time()
     cutoff = now - retention_days * 24 * 60 * 60
     removed = 0
