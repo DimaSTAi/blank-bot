@@ -4,106 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Бланк-бот — генерация юридических документов</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --bg: #f9fafb;
-            --card: #ffffff;
-            --border: #e5e7eb;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: var(--text);
-            background: var(--bg);
-            line-height: 1.6;
-        }
-        header {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 1.5rem;
-        }
-        .container {
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-        h2 { font-size: 1.4rem; margin-top: 2rem; }
-        .subtitle { color: var(--muted); font-size: 1.1rem; }
-        .hero {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-top: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .btn {
-            display: inline-block;
-            padding: 0.85rem 1.5rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-right: 0.75rem;
-            margin-bottom: 0.75rem;
-            transition: background 0.2s;
-        }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-primary:hover { background: var(--primary-dark); }
-        .btn-secondary { background: #e5e7eb; color: var(--text); }
-        .btn-secondary:hover { background: #d1d5db; }
-        .prices {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .price-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-        }
-        .price-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
-        .price-card p { margin: 0.25rem 0; color: var(--muted); font-size: 0.95rem; }
-        .price { font-weight: 700; color: var(--primary); font-size: 1.2rem; }
-        footer {
-            margin-top: 3rem;
-            padding: 2rem 1.5rem;
-            background: var(--card);
-            border-top: 1px solid var(--border);
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-        .legal-links { margin-top: 1rem; }
-        .legal-links a { color: var(--primary); text-decoration: none; margin-right: 1rem; }
-        .legal-links a:hover { text-decoration: underline; }
-        .warning {
-            background: #fffbeb;
-            border-left: 4px solid #f59e0b;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1.5rem;
-        }
-        .contact { margin-top: 1rem; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <div class="container" style="padding:0; display:flex; align-items:center; justify-content:space-between;">
-            <strong>Бланк-бот</strong>
-            <span style="font-size:0.9rem; color:var(--muted);">Самозанятый Стадник Д.О.</span>
+        <div class="container" style="padding:0; display:flex; align-items:center; justify-content:center;">
+            <strong class="logo">Бланк-бот</strong>
         </div>
     </header>
 
     <main class="container">
         <div class="hero">
             <h1>Составь юридический документ за пару минут</h1>
-            <p class="subtitle">Бланк-бот помогает заполнить типовые документы: ДКП, договоры аренды, расписки, акты, дарственную и претензию. Всё происходит в Telegram. Оплата через ЮKassa.</p>
+            <p class="subtitle">Бланк-бот помогает заполнить типовые документы: ДКП, договоры аренды, расписки, акты, дарственную и претензию. Всё происходит в Telegram и Max. Оплата через ЮKassa.</p>
 
             <div style="margin-top:1.5rem;">
                 <a class="btn btn-primary" href="https://t.me/blankOfficial_bot" target="_blank">Написать в Telegram</a>
@@ -120,17 +37,17 @@
             <div class="price-card">
                 <h3>Договор купли-продажи</h3>
                 <p>Транспорт, спецтехника, товар</p>
-                <p class="price">150 ₽</p>
+                <p class="price">180 ₽</p>
             </div>
             <div class="price-card">
                 <h3>Договор аренды</h3>
                 <p>Квартира/комната, посуточно, гараж, ТС</p>
-                <p class="price">150 ₽</p>
+                <p class="price">180 ₽</p>
             </div>
             <div class="price-card">
                 <h3>Расписка</h3>
                 <p>Долговая / о возврате долга</p>
-                <p class="price">150 ₽</p>
+                <p class="price">180 ₽</p>
             </div>
             <div class="price-card">
                 <h3>Акт</h3>
@@ -140,12 +57,12 @@
             <div class="price-card">
                 <h3>Договор дарения</h3>
                 <p>Стандартный</p>
-                <p class="price">150 ₽</p>
+                <p class="price">180 ₽</p>
             </div>
             <div class="price-card">
                 <h3>Претензия на товар</h3>
                 <p>В магазин</p>
-                <p class="price">150 ₽</p>
+                <p class="price">180 ₽</p>
             </div>
         </div>
 
