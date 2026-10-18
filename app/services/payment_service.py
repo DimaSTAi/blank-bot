@@ -1,4 +1,12 @@
 import asyncio
+import os
+
+# Если на компьютере включён системный прокси/VPN, библиотека ЮKassa попытается
+# идти через него и упадёт, когда прокси выключен. ЮKassa — российский сервис,
+# ходим к ней напрямую всегда.
+os.environ.setdefault("NO_PROXY", "*")
+os.environ.setdefault("no_proxy", "*")
+
 from yookassa import Configuration, Payment
 from app.config import (
     YOOKASSA_SHOP_ID,
