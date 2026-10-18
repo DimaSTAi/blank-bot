@@ -1,36 +1,30 @@
+
+!.env.example
+# Docker local volumes
+# Generated user PDFs (contain personal data)
+# IDE
+# Logs
+# OS
 # Python
-__pycache__/
+# Telegram bot token and secrets
+# Virtual environment
+*.egg-info/
+*.key
+*.log
+*.pem
 *.py[cod]
 *.so
-*.egg-info/
-dist/
-build/
-
-# Virtual environment
-venv/
+*.swo
+*.swp
+.DS_Store
 .env
 .env.*
-!.env.example
-
-# Telegram bot token and secrets
-*.key
-*.pem
-
-# Generated user PDFs (contain personal data)
-app/data/*.pdf
-
-# Logs
-*.log
-
-# IDE
-.vscode/
 .idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
+.vscode/
 Thumbs.db
-
-# Docker local volumes
+__pycache__/
+app/data/*.pdf
+build/
+dist/
 postgres_data/
+venv/
