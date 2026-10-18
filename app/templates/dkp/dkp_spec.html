@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Договор купли-продажи спецтехники</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; padding: 40px; line-height: 1.5; }
+        h1 { text-align: center; font-size: 18px; margin-bottom: 8px; }
+        .subtitle { text-align: center; margin-bottom: 24px; }
+        p { margin: 8px 0; }
+        .section { margin-top: 18px; }
+        .sign { margin-top: 40px; }
+        .sign-row { display: flex; justify-content: space-between; margin-top: 30px; }
+        .sign-box { width: 45%; }
+    </style>
+</head>
+<body>
+    <h1>ДОГОВОР КУПЛИ-ПРОДАЖИ СПЕЦТЕХНИКИ</h1>
+    <p class="subtitle">г. {{ data.city }} «{{ data.date }}»</p>
+
+    <p><strong>Продавец:</strong> {{ data.seller_name }}</p>
+    <p><strong>Покупатель:</strong> {{ data.buyer_name }}</p>
+
+    <div class="section">
+        <p><strong>1. Предмет договора</strong></p>
+        <p>Техника: {{ data.tech_name }}, год выпуска: {{ data.tech_year }}, заводской/серийный номер: {{ data.tech_serial }}.</p>
+    </div>
+
+    <div class="section">
+        <p><strong>2. Цена</strong></p>
+        <p>Стоимость техники — {{ data.price }} ({{ currency }}).</p>
+    </div>
+
+    <div class="section">
+        <p><strong>3. Передача</strong></p>
+        <p>Продавец передаёт технику и комплект документов. Покупатель проверил состояние и претензий не имеет.</p>
+    </div>
+
+    <div class="sign">
+        <div class="sign-row">
+            <div class="sign-box">
+                <p><strong>Продавец</strong></p>
+                <p>________________ / {{ data.seller_name }}</p>
+            </div>
+            <div class="sign-box">
+                <p><strong>Покупатель</strong></p>
+                <p>________________ / {{ data.buyer_name }}</p>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top: 40px; font-size: 10px; color: #555;">Сформировано автоматически ботом «Бланк-бот».</p>
+</body>
+</html>
