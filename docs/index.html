@@ -3,607 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бланк-бот — генерация юридических документов онлайн</title>
-    <meta name="description" content="Бланк-бот помогает за несколько минут составить типовые юридические документы: ДКП, договоры аренды, расписки, акты, дарственную, претензию. Оплата через ЮKassa.">
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #eff6ff;
-            --accent: #f59e0b;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: var(--text);
-            background: var(--bg);
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-        }
-        header {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .nav {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .logo {
-            font-weight: 800;
-            font-size: 1.4rem;
-            color: var(--primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .logo-icon {
-            background: var(--primary);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            font-size: 0.95rem;
-        }
-        .nav-links a {
-            color: var(--muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .nav-links a:hover { color: var(--primary); }
-        .hero {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 5rem 0 6rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 500px;
-            height: 500px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 50%;
-        }
-        .hero .container { position: relative; z-index: 1; }
-        .hero h1 {
-            font-size: 3rem;
-            line-height: 1.1;
-            margin: 0 0 1rem;
-            max-width: 700px;
-        }
-        .hero p {
-            font-size: 1.25rem;
-            opacity: 0.95;
-            max-width: 620px;
-            margin: 0 0 2rem;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1rem 1.75rem;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.05rem;
-            transition: transform 0.15s, box-shadow 0.15s;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary {
-            background: white;
-            color: var(--primary);
-            box-shadow: var(--shadow);
-        }
-        .btn-telegram {
-            background: #229ed9;
-            color: white;
-            box-shadow: var(--shadow);
-        }
-        .btn-telegram:hover { background: #1a8bc4; }
-        .btn-outline {
-            background: transparent;
-            color: white;
-            border: 2px solid rgba(255,255,255,0.5);
-        }
-        .btn-outline:hover { background: rgba(255,255,255,0.1); }
-        .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .features {
-            padding: 4rem 0;
-            background: var(--bg);
-        }
-        .section-title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-        }
-        .section-subtitle {
-            text-align: center;
-            color: var(--muted);
-            font-size: 1.1rem;
-            margin-bottom: 3rem;
-        }
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-        }
-        .feature-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.75rem;
-            box-shadow: var(--shadow);
-        }
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        .feature-card h3 {
-            font-size: 1.15rem;
-            margin: 0 0 0.5rem;
-        }
-        .feature-card p {
-            color: var(--muted);
-            margin: 0;
-            font-size: 0.95rem;
-        }
-        .how-it-works {
-            padding: 4rem 0;
-            background: white;
-        }
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            counter-reset: step;
-        }
-        .step {
-            position: relative;
-            padding: 1.5rem;
-            background: var(--bg);
-            border-radius: 16px;
-            text-align: center;
-        }
-        .step::before {
-            counter-increment: step;
-            content: counter(step);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            font-weight: 800;
-            margin: 0 auto 1rem;
-        }
-        .step h4 { margin: 0 0 0.5rem; }
-        .step p { color: var(--muted); margin: 0; font-size: 0.95rem; }
-        .prices {
-            padding: 4rem 0;
-            background: var(--bg);
-        }
-        .prices-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        .price-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.75rem;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .price-card h3 {
-            font-size: 1.25rem;
-            margin: 0 0 0.5rem;
-        }
-        .price-card .tag {
-            display: inline-block;
-            background: var(--primary-light);
-            color: var(--primary);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-        .price-card ul {
-            color: var(--muted);
-            padding-left: 1.25rem;
-            margin: 0 0 1.5rem;
-            font-size: 0.95rem;
-        }
-        .price-card .price {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin-top: auto;
-        }
-        .legal-section {
-            padding: 4rem 0;
-            background: white;
-        }
-        .legal-card {
-            background: var(--primary-light);
-            border: 1px solid #dbeafe;
-            border-radius: 16px;
-            padding: 2rem;
-        }
-        .legal-card h2 {
-            margin-top: 0;
-            color: var(--primary-dark);
-        }
-        .legal-card p { color: var(--text); }
-        .legal-card .checkbox {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-        .legal-card .checkbox input {
-            width: 20px;
-            height: 20px;
-            margin-top: 2px;
-            accent-color: var(--primary);
-        }
-        .legal-card .checkbox label {
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-        .warning-box {
-            background: #fffbeb;
-            border-left: 4px solid var(--accent);
-            padding: 1.25rem;
-            border-radius: 12px;
-            margin-top: 1.5rem;
-            color: #92400e;
-        }
-        .contacts {
-            padding: 4rem 0;
-            background: var(--bg);
-        }
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-        }
-        .contact-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-        .contact-card strong {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-        .contact-card a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 700;
-        }
-        footer {
-            background: var(--text);
-            color: #9ca3af;
-            padding: 3rem 0 2rem;
-            font-size: 0.9rem;
-        }
-        footer a {
-            color: #d1d5db;
-            text-decoration: none;
-        }
-        footer a:hover { color: white; }
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        .footer-col h4 {
-            color: white;
-            margin: 0 0 1rem;
-            font-size: 1rem;
-        }
-        .footer-col ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .footer-col li { margin-bottom: 0.5rem; }
-        .copyright {
-            border-top: 1px solid #374151;
-            padding-top: 1.5rem;
-            text-align: center;
-        }
-        @media (max-width: 640px) {
-            .hero h1 { font-size: 2.1rem; }
-            .hero p { font-size: 1.05rem; }
-            .nav-links { display: none; }
-            .hero-btns { flex-direction: column; }
-            .btn { width: 100%; justify-content: center; }
-        }
-    </style>
+    <title>Бланк-бот — генерация юридических документов</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <div class="container nav">
-            <a href="index.html" class="logo">
-                <span class="logo-icon">📄</span>
-                Бланк-бот
-            </a>
-            <nav class="nav-links">
-                <a href="#how">Как работает</a>
-                <a href="#prices">Цены</a>
-                <a href="#legal">Юридическая информация</a>
-                <a href="#contacts">Контакты</a>
-            </nav>
+        <div class="container" style="padding:0; display:flex; align-items:center; justify-content:center;">
+            <strong class="logo">Бланк-бот</strong>
         </div>
     </header>
 
-    <section class="hero">
-        <div class="container">
+    <main class="container">
+        <div class="hero">
             <h1>Составь юридический документ за пару минут</h1>
-            <p>Бланк-бот помогает заполнить типовые документы: договоры купли-продажи, аренды, расписки, акты, дарственную и претензию. Готовый PDF приходит сразу после оплаты.</p>
-            <p style="font-size: 1rem; opacity: 0.9; margin-top: -1rem;">Сейчас работает в Telegram. Запуск в мессенджере Max (VK) — в ближайшее время.</p>
-            <div class="hero-btns">
-                <a class="btn btn-primary" href="https://t.me/blankOfficial_bot" target="_blank">🚀 Начать в Telegram</a>
-                <a class="btn btn-outline" href="#how">Как это работает</a>
-            </div>
-        </div>
-    </section>
+            <p class="subtitle">Бланк-бот помогает заполнить типовые документы: ДКП, договоры аренды, расписки, акты, дарственную и претензию. Всё происходит в Telegram и Max. Оплата через ЮKassa.</p>
 
-    <section class="features">
-        <div class="container">
-            <h2 class="section-title">Почему Бланк-бот</h2>
-            <p class="section-subtitle">Быстро, удобно и без лишних сложностей</p>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>Быстрая генерация</h3>
-                    <p>Ответьте на вопросы бота — документ готов за несколько минут.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Типовые шаблоны</h3>
-                    <p>Шаблоны основаны на распространённых формах договоров и документов.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">💳</div>
-                    <h3>Оплата через ЮKassa</h3>
-                    <p>Принимаем карты российских банков. Безопасно и официально.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Данные под защитой</h3>
-                    <p>Персональные данные удаляются через 3 дня после выдачи документа.</p>
-                </div>
+            <div style="margin-top:1.5rem;">
+                <a class="btn btn-primary" href="https://t.me/blankOfficial_bot" target="_blank">Написать в Telegram</a>
+                <a class="btn btn-secondary" href="#max">Написать в Max (скоро)</a>
             </div>
-        </div>
-    </section>
 
-    <section class="how-it-works" id="how">
-        <div class="container">
-            <h2 class="section-title">Как это работает</h2>
-            <p class="section-subtitle">Четыре простых шага до готового документа</p>
-            <div class="steps">
-                <div class="step">
-                    <h4>Выберите документ</h4>
-                    <p>Каталог: ДКП, аренда, расписки, акты, дарение, претензия.</p>
-                </div>
-                <div class="step">
-                    <h4>Ответьте на вопросы</h4>
-                    <p>Бот последовательно запрашивает нужные данные.</p>
-                </div>
-                <div class="step">
-                    <h4>Проверьте и оплатите</h4>
-                    <p>Итоговая сумма и ссылка на оплату через ЮKassa.</p>
-                </div>
-                <div class="step">
-                    <h4>Получите PDF</h4>
-                    <p>Готовый документ придёт в Telegram. Распечатывайте и подписывайте.</p>
-                </div>
+            <div class="warning">
+                Бот предоставляет типовые шаблоны документов. Они не заменяют консультацию юриста. Для сложных случаев обратитесь к специалисту.
             </div>
         </div>
-    </section>
 
-    <section class="prices" id="prices">
-        <div class="container">
-            <h2 class="section-title">Цены</h2>
-            <p class="section-subtitle">Один документ — одна фиксированная стоимость</p>
-            <div class="prices-grid">
-                <div class="price-card">
-                    <div>
-                        <span class="tag">Популярное</span>
-                        <h3>Договор купли-продажи</h3>
-                        <ul>
-                            <li>Транспортное средство</li>
-                            <li>Спецтехника</li>
-                            <li>Товар</li>
-                        </ul>
-                    </div>
-                    <div class="price">150 ₽</div>
-                </div>
-                <div class="price-card">
-                    <div>
-                        <span class="tag">Популярное</span>
-                        <h3>Договор аренды</h3>
-                        <ul>
-                            <li>Квартира / комната</li>
-                            <li>Посуточная аренда</li>
-                            <li>Гараж</li>
-                            <li>Транспортное средство</li>
-                        </ul>
-                    </div>
-                    <div class="price">150 ₽</div>
-                </div>
-                <div class="price-card">
-                    <div>
-                        <h3>Расписка</h3>
-                        <ul>
-                            <li>Долговая расписка</li>
-                            <li>Расписка о возврате долга</li>
-                        </ul>
-                    </div>
-                    <div class="price">150 ₽</div>
-                </div>
-                <div class="price-card">
-                    <div>
-                        <h3>Акт</h3>
-                        <ul>
-                            <li>Выполненных работ</li>
-                            <li>Приёма-передачи товара</li>
-                        </ul>
-                    </div>
-                    <div class="price">180 ₽</div>
-                </div>
-                <div class="price-card">
-                    <div>
-                        <h3>Договор дарения</h3>
-                        <ul>
-                            <li>Стандартный договор дарения</li>
-                        </ul>
-                    </div>
-                    <div class="price">150 ₽</div>
-                </div>
-                <div class="price-card">
-                    <div>
-                        <h3>Претензия на товар</h3>
-                        <ul>
-                            <li>В магазин / продавцу</li>
-                        </ul>
-                    </div>
-                    <div class="price">150 ₽</div>
-                </div>
+        <h2>Цены</h2>
+        <div class="prices">
+            <div class="price-card">
+                <h3>Договор купли-продажи</h3>
+                <p>Транспорт, спецтехника, товар</p>
+                <p class="price">180 ₽</p>
+            </div>
+            <div class="price-card">
+                <h3>Договор аренды</h3>
+                <p>Квартира/комната, посуточно, гараж, ТС</p>
+                <p class="price">180 ₽</p>
+            </div>
+            <div class="price-card">
+                <h3>Расписка</h3>
+                <p>Долговая / о возврате долга</p>
+                <p class="price">180 ₽</p>
+            </div>
+            <div class="price-card">
+                <h3>Акт</h3>
+                <p>Выполненных работ / приёма-передачи</p>
+                <p class="price">180 ₽</p>
+            </div>
+            <div class="price-card">
+                <h3>Договор дарения</h3>
+                <p>Стандартный</p>
+                <p class="price">180 ₽</p>
+            </div>
+            <div class="price-card">
+                <h3>Претензия на товар</h3>
+                <p>В магазин</p>
+                <p class="price">180 ₽</p>
             </div>
         </div>
-    </section>
 
-    <section class="legal-section" id="legal">
-        <div class="container">
-            <div class="legal-card">
-                <h2>Юридическая информация и согласие</h2>
-                <p>Используя Бланк-бот, вы соглашаетесь с условиями:</p>
-                <ul>
-                    <li><a href="offer.html" target="_blank">Публичная оферта</a> — договор между вами и исполнителем.</li>
-                    <li><a href="privacy.html" target="_blank">Политика конфиденциальности</a> — как мы обрабатываем персональные данные.</li>
-                    <li><a href="consent.html" target="_blank">Согласие на обработку персональных данных</a>.</li>
-                </ul>
-                <p>Оплата услуги означает акцепт публичной оферты и согласие на обработку персональных данных, необходимых для генерации документа.</p>
-                <div class="warning-box">
-                    <strong>Важно:</strong> Бот предоставляет типовые шаблоны документов. Они не заменяют индивидуальную консультацию юриста. Для сложных случаев обратитесь к специалисту.
-                </div>
-            </div>
-        </div>
-    </section>
+        <h2>Как это работает</h2>
+        <ol>
+            <li>Выбираете документ в каталоге.</li>
+            <li>Отвечаете на вопросы бота.</li>
+            <li>Проверяете итоговые данные.</li>
+            <li>Оплачиваете через ЮKassa.</li>
+            <li>Получаете готовый PDF в Telegram.</li>
+        </ol>
 
-    <section class="contacts" id="contacts">
-        <div class="container">
-            <h2 class="section-title">Контакты и реквизиты</h2>
-            <p class="section-subtitle">Исполнитель и служба поддержки</p>
-            <div class="contact-grid">
-                <div class="contact-card">
-                    <strong>Исполнитель</strong>
-                    <span>Стадник Дмитрий Олегович</span>
-                </div>
-                <div class="contact-card">
-                    <strong>Статус</strong>
-                    <span>Самозанятый</span>
-                </div>
-                <div class="contact-card">
-                    <strong>Телефон</strong>
-                    <a href="tel:+79148544222">+7 (914) 854-42-22</a>
-                </div>
-                <div class="contact-card">
-                    <strong>Email</strong>
-                    <a href="mailto:DSTadnik1689@yandex.ru">DSTadnik1689@yandex.ru</a>
-                </div>
-            </div>
+        <h2>Контакты и реквизиты</h2>
+        <p class="contact"><strong>Исполнитель:</strong> Стадник Дмитрий Олегович</p>
+        <p class="contact"><strong>Телефон:</strong> +7 (914) 854-42-22</p>
+        <p class="contact"><strong>Email:</strong> <a href="mailto:DSTadnik1689@yandex.ru">DSTadnik1689@yandex.ru</a></p>
+        <p class="contact"><strong>Статус:</strong> самозанятый</p>
+
+        <div class="legal-links">
+            <a href="offer.html">Публичная оферта</a>
+            <a href="privacy.html">Политика конфиденциальности</a>
         </div>
-    </section>
+
+        <div id="max" style="margin-top:2rem; padding:1rem; background:#f3f4f6; border-radius:10px;">
+            <strong>Max (VK)</strong><br>
+            Запуск бота в мессенджере Max планируется в ближайшее время.
+        </div>
+    </main>
 
     <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-col">
-                    <h4>Бланк-бот</h4>
-                    <p>Telegram-сервис для генерации типовых юридических документов в формате PDF.</p>
-                </div>
-                <div class="footer-col">
-                    <h4>Документы</h4>
-                    <ul>
-                        <li><a href="#prices">Договоры купли-продажи</a></li>
-                        <li><a href="#prices">Договоры аренды</a></li>
-                        <li><a href="#prices">Расписки и акты</a></li>
-                        <li><a href="#prices">Претензии и дарственные</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Юридическая информация</h4>
-                    <ul>
-                        <li><a href="offer.html">Публичная оферта</a></li>
-                        <li><a href="privacy.html">Политика конфиденциальности</a></li>
-                        <li><a href="consent.html">Согласие на обработку данных</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Контакты</h4>
-                    <ul>
-                        <li><a href="https://t.me/blankOfficial_bot" target="_blank">@blankOfficial_bot (Telegram)</a></li>
-                        <li>Max (VK) — скоро</li>
-                        <li><a href="tel:+79148544222">+7 (914) 854-42-22</a></li>
-                        <li><a href="mailto:DSTadnik1689@yandex.ru">DSTadnik1689@yandex.ru</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                © 2026 Бланк-бот. Стадник Дмитрий Олегович. Все права защищены.
-            </div>
+        <div class="container" style="padding:0;">
+            © 2026 Бланк-бот. Стадник Дмитрий Олегович. Все права защищены.<br>
+            <a href="offer.html">Публичная оферта</a> · <a href="privacy.html">Политика конфиденциальности</a>
         </div>
     </footer>
 </body>
