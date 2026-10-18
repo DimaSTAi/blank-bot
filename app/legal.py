@@ -1,5 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+from app.config import LANDING_URL
+
 DISCLAIMER = (
     "⚠️ Бот предоставляет типовые шаблоны документов. "
     "Они не заменяют консультацию юриста. "
@@ -24,6 +26,7 @@ def legal_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="📄 Публичная оферта", callback_data="show_terms")],
         [InlineKeyboardButton(text="🔒 Политика конфиденциальности", callback_data="show_privacy")],
         [InlineKeyboardButton(text="✅ Согласие на обработку данных", callback_data="show_consent")],
+        [InlineKeyboardButton(text="🌐 Наш сайт", url=LANDING_URL)],
     ])
 
 

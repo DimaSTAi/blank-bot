@@ -4,6 +4,7 @@ import logging
 
 from maxo import Router
 from maxo.fsm.context import FSMContext
+from maxo.routing.filters.base import BaseFilter
 from maxo.fsm.state import State, StatesGroup
 from maxo.routing.filters import Command, Payload, StateFilter
 from maxo.types.callback_button import CallbackButton
@@ -11,6 +12,7 @@ from maxo.types.link_button import LinkButton
 from maxo.utils.upload_media import FSInputFile
 
 from app.catalog import DOCUMENTS
+from app.config import LANDING_URL
 from app.legal import CONSENT_TEXT, PRIVACY_TEXT, TERMS_TEXT, start_text
 from app.services.cleanup_service import cleanup_old_pdfs
 from app.services.payment_service import check_payment, create_payment
@@ -19,6 +21,14 @@ from app.services.pdf_service import generate_pdf
 logger = logging.getLogger(__name__)
 
 router = Router(name="max")
+
+
+class StartButtonFilter(BaseFilter):
+    """Кнопка «Начать» в MAX шлёт простое сообщение «Начать», а не команду /start."""
+
+    async def __call__(self, update, ctx) -> bool:
+        text = update.text
+        return bool(text) and text.strip().lower() in ("начать", "старт")
 
 
 class MaxForm(StatesGroup):
@@ -42,6 +52,7 @@ def _main_menu():
     for key, doc in DOCUMENTS.items():
         rows.append([CallbackButton(payload=f"doc:{key}", text=f"{doc['icon']} {doc['name']}")])
     rows.append([CallbackButton(payload="show_legal", text="📄 Оферта / Политика / Согласие")])
+    rows.append([LinkButton(text="🌐 Наш сайт", url=LANDING_URL)])
     return rows
 
 
@@ -60,6 +71,7 @@ def _legal_keyboard():
         [CallbackButton(payload="show_terms", text="📄 Публичная оферта")],
         [CallbackButton(payload="show_privacy", text="🔒 Политика конфиденциальности")],
         [CallbackButton(payload="show_consent", text="✅ Согласие на обработку данных")],
+        [LinkButton(text="🌐 Наш сайт", url=LANDING_URL)],
         [CallbackButton(payload="menu", text="◀️ Назад")],
     ]
 
@@ -115,6 +127,12 @@ class ShowConsentPayload(Payload, prefix="show_consent"):
 async def start_handler(update, state: FSMContext):
     await state.clear()
     cleanup_old_pdfs()
+    await update.answer_text(start_text(), keyboard=_main_menu())
+
+
+@router.message_created(StartButtonFilter())
+async def start_button_handler(update, state: FSMContext):
+    await state.clear()
     await update.answer_text(start_text(), keyboard=_main_menu())
 
 

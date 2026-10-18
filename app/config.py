@@ -12,6 +12,7 @@ YOOKASSA_RETURN_URL = os.getenv("YOOKASSA_RETURN_URL", "")
 YOOKASSA_WEBHOOK_URL = os.getenv("YOOKASSA_WEBHOOK_URL", "")
 YOOKASSA_WEBHOOK_SECRET = os.getenv("YOOKASSA_WEBHOOK_SECRET", "")
 PROXY_URL = os.getenv("PROXY_URL", "")
+LANDING_URL = os.getenv("LANDING_URL", "https://dimastai.github.io/blank-bot/")
 
 YOOKASSA_TEST_MODE = os.getenv("YOOKASSA_TEST_MODE", "true").lower() in ("true", "1", "yes")
 

@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.catalog import DOCUMENTS
+from app.config import LANDING_URL
 
 
 def main_menu_keyboard() -> InlineKeyboardMarkup:
@@ -12,6 +13,10 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     buttons.append([InlineKeyboardButton(
         text="📄 Оферта / Политика / Согласие",
         callback_data="show_legal"
+    )])
+    buttons.append([InlineKeyboardButton(
+        text="🌐 Наш сайт",
+        url=LANDING_URL
     )])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
