@@ -136,6 +136,20 @@ async def start_button_handler(update, state: FSMContext):
     await update.answer_text(start_text(), keyboard=_main_menu())
 
 
+@router.message_created(StateFilter(None))
+async def fallback_handler(update, state: FSMContext):
+    # В веб-версии MAX кнопка «Начать» шлёт служебное сообщение без текста.
+    # Плюс на любой посторонний текст вне диалога отвечаем меню, чтобы бот не молчал.
+    await state.clear()
+    if update.text is None:
+        await update.answer_text(start_text(), keyboard=_main_menu())
+    else:
+        await update.answer_text(
+            "Не понял. Чтобы начать заново, нажми «Начать» или выбери документ в меню.",
+            keyboard=_main_menu(),
+        )
+
+
 @router.message_created(Command("terms"))
 async def terms_handler(update):
     await update.answer_text(TERMS_TEXT, keyboard=_legal_keyboard())
