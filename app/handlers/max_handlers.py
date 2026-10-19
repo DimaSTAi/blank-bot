@@ -8,6 +8,7 @@ from maxo.routing.filters.base import BaseFilter
 from maxo.fsm.state import State, StatesGroup
 from maxo.routing.filters import Command, Payload, StateFilter
 from maxo.types.callback_button import CallbackButton
+from maxo.types.bot_started import BotStarted
 from maxo.types.link_button import LinkButton
 from maxo.utils.upload_media import FSInputFile
 
@@ -148,6 +149,13 @@ async def fallback_handler(update, state: FSMContext):
             "Не понял. Чтобы начать заново, нажми «Начать» или выбери документ в меню.",
             keyboard=_main_menu(),
         )
+
+
+@router.bot_started()
+async def bot_started_handler(update: BotStarted, state: FSMContext):
+    # Событие bot_started: нажатие «Начать» в веб-версии MAX приходит именно им.
+    await state.clear()
+    await update.send_message(text=start_text(), keyboard=_main_menu())
 
 
 @router.message_created(Command("terms"))
