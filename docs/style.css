@@ -175,3 +175,13 @@ footer {
     font-size: 0.95rem;
 }
 .contact { margin-top: 1rem; font-size: 1.1rem; }
+@media (max-width: 640px) {
+    h1 {
+        font-size: 1.5rem;
+        word-break: normal;
+        overflow-wrap: normal;
+    }
+    h2 { font-size: 1.35rem; }
+    .hero { padding: 1.75rem 1rem; }
+    .subtitle { font-size: 1.05rem; }
+}
