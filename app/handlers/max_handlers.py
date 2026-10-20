@@ -78,7 +78,12 @@ def _legal_keyboard():
 
 
 def _legal_menu_keyboard():
-    return [[CallbackButton(payload="show_legal", text="📄 Юридическая информация")]]
+    return [
+        [CallbackButton(payload="show_terms", text="📄 Публичная оферта")],
+        [CallbackButton(payload="show_privacy", text="🔒 Политика конфиденциальности")],
+        [CallbackButton(payload="show_consent", text="✅ Согласие на обработку данных")],
+        [CallbackButton(payload="menu", text="◀️ Назад")],
+    ]
 
 
 def _restart_keyboard():
@@ -175,33 +180,43 @@ async def consent_handler(update):
 
 @router.message_callback(ShowTermsPayload.filter())
 async def show_terms_handler(update):
-    await update.edit_message(text=TERMS_TEXT, keyboard=_legal_keyboard())
+    try:
+        await update.edit_message(text=TERMS_TEXT, keyboard=_legal_keyboard())
+    except Exception:
+        await update.answer_text(TERMS_TEXT, keyboard=_legal_keyboard())
     await _ack(update)
 
 
 @router.message_callback(ShowPrivacyPayload.filter())
 async def show_privacy_handler(update):
-    await update.edit_message(text=PRIVACY_TEXT, keyboard=_legal_keyboard())
+    try:
+        await update.edit_message(text=PRIVACY_TEXT, keyboard=_legal_keyboard())
+    except Exception:
+        await update.answer_text(PRIVACY_TEXT, keyboard=_legal_keyboard())
     await _ack(update)
 
 
 @router.message_callback(ShowConsentPayload.filter())
 async def show_consent_handler(update):
-    await update.edit_message(text=CONSENT_TEXT, keyboard=_legal_keyboard())
+    try:
+        await update.edit_message(text=CONSENT_TEXT, keyboard=_legal_keyboard())
+    except Exception:
+        await update.answer_text(CONSENT_TEXT, keyboard=_legal_keyboard())
     await _ack(update)
 
 
 @router.message_callback(ShowLegalPayload.filter())
 async def show_legal_handler(update):
-    await update.edit_message(
-        text=(
-            "📄 Юридическая информация:\n\n"
-            "• /terms — публичная оферта\n"
-            "• /privacy — политика конфиденциальности\n"
-            "• /consent — согласие на обработку персональных данных"
-        ),
-        keyboard=_legal_menu_keyboard(),
-    )
+    try:
+        await update.edit_message(
+            text="📄 Юридическая информация:\n\nВыбери документ:",
+            keyboard=_legal_menu_keyboard(),
+        )
+    except Exception:
+        await update.answer_text(
+            text="📄 Юридическая информация:\n\nВыбери документ:",
+            keyboard=_legal_menu_keyboard(),
+        )
     await _ack(update)
 
 
