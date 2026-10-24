@@ -231,7 +231,8 @@ async def pay_handler(callback: types.CallbackQuery, state: FSMContext):
         await state.update_data(payment_id=payment_id)
         await callback.message.edit_text(
             f"💳 Для получения документа оплатите {price} ₽ по ссылке:\n\n{url}\n\n"
-            f"После оплаты нажми кнопку «Проверить оплату».",
+            f"⚠️ Если оплата не открывается — выключи VPN и попробуй снова.\n\n"
+            f"После оплаты нажми кнопку «Проверить оплату» и получи готовый документ.",
             reply_markup=types.InlineKeyboardMarkup(inline_keyboard=[
                 [types.InlineKeyboardButton(text="🔍 Проверить оплату", callback_data="check_payment")],
             ]),
