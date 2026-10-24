@@ -120,10 +120,11 @@ def _back_keyboard():
 
 # Нажатие кнопки в старых версиях MAX-клиентов может прийти обычным
 # сообщением с текстом payload — такое нельзя сохранять как ответ юзера.
-PAYLOAD_TEXTS = {
+# Кортеж, не множество: str.startswith принимает только tuple
+PAYLOAD_TEXTS = (
     "doc:", "subtype:", "back_step", "back_last", "menu", "pay",
     "check_payment", "show_", "start",
-}
+)
 
 class DocPayload(Payload, prefix="doc"):
     key: str
