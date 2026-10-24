@@ -428,6 +428,8 @@ async def _show_summary(update, state: FSMContext):
 @router.message_callback(PayPayload.filter())
 async def pay_handler(update, payload: PayPayload, state: FSMContext):
     logger.info("MAX: клик «Оплатить»")
+    # Подтверждаем клик сразу — до создания платежа, иначе кнопка выглядит зависшей
+    await _ack(update)
     data = await state.get_data()
 
     old_url = data.get("pay_url")
@@ -479,7 +481,6 @@ async def pay_handler(update, payload: PayPayload, state: FSMContext):
     except Exception as e:
         logger.exception("Ошибка создания платежа (MAX): %s", e)
         await update.answer_text(f"Ошибка при создании платежа: {e}")
-    await _ack(update)
 
 
 @router.message_callback(CheckPaymentPayload.filter())

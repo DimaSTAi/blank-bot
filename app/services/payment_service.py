@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import time
 import uuid
@@ -18,12 +19,36 @@ from app.config import (
 )
 
 API_URL = "https://api.yookassa.ru/v3/"
-# С сервера Amvera ЮKassa отвечает нестабильно (то 1с, то дольше 30с) —
+# С сервера Amvera ЮKassa отвечает нестабильно (то 1с, то дольше 20с) —
 # поэтому таймаут + повторные попытки. Ключ идемпотентности один на все
 # попытки, так что повтор не создаст второй платёж.
 TIMEOUT = (5, 20)
 ATTEMPTS = 2
 PAUSE = 2  # секунды между попытками
+
+logger = logging.getLogger(__name__)
+
+# Один постоянный сеанс на все запросы — соединение с ЮKassa не рвётся,
+# каждый следующий платёж идёт по уже прогретому каналу (без нового TLS-рукопожатия)
+_session = requests.Session()
+
+
+def _warm_up_sync() -> None:
+    """Прогрев: первое соединение с ЮKassa устанавливаем при старте бота,
+    чтобы первый клиентский клик «Оплатить» не ждал рукопожатия."""
+    try:
+        r = _session.get(API_URL + "payments", auth=_auth(), timeout=TIMEOUT, params={"limit": "1"})
+        logger.info("Прогрев ЮKassa выполнен (статус %s)", r.status_code)
+    except Exception as e:
+        logger.warning("Прогрев ЮKassa не удался (не критично): %s", e)
+
+
+async def warm_up() -> None:
+    await asyncio.to_thread(_warm_up_sync)
+    # не даём сеансу простаивать — обновляем соединение раз в ~7 минут
+    while True:
+        await asyncio.sleep(420)
+        _warm_up_sync()
 
 
 def _auth() -> tuple[str, str]:
@@ -34,7 +59,7 @@ def _request_with_retry(method: str, path: str, **kwargs) -> dict:
     last_exc: Exception | None = None
     for attempt in range(1, ATTEMPTS + 1):
         try:
-            r = requests.request(method, API_URL + path, auth=_auth(), timeout=TIMEOUT, **kwargs)
+            r = _session.request(method, API_URL + path, auth=_auth(), timeout=TIMEOUT, **kwargs)
             r.raise_for_status()
             return r.json()
         except (requests.Timeout, requests.ConnectionError) as e:

@@ -217,6 +217,7 @@ async def _show_summary(message: types.Message, state: FSMContext):
 
 @router.callback_query(F.data == "pay")
 async def pay_handler(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()  # мгновенная реакция кнопки, пока создаётся платёж
     data = await state.get_data()
     if not data.get("doc_key"):
         await callback.answer("Сессия сброшена. Начни заново: /start", show_alert=True)
@@ -248,7 +249,6 @@ async def pay_handler(callback: types.CallbackQuery, state: FSMContext):
         await state.set_state(Form.payment)
     except Exception as e:
         await callback.message.edit_text(f"Ошибка при создании платежа: {e}")
-    await callback.answer()
 
 
 @router.callback_query(F.data == "check_payment")
