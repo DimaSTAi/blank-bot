@@ -33,9 +33,16 @@ def subtypes_keyboard(doc_key: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
+def back_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_step")],
+    ])
+
+
 def confirm_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✅ Оплатить", callback_data="pay")],
+        [InlineKeyboardButton(text="◀️ Назад", callback_data="back_last")],
         [InlineKeyboardButton(text="◀️ Назад к каталогу", callback_data="main_menu")],
     ])
 

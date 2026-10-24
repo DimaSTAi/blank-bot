@@ -2,7 +2,7 @@ from aiogram import Router, F, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from app.states import Form
-from app.keyboards import main_menu_keyboard, subtypes_keyboard, confirm_keyboard, restart_keyboard
+from app.keyboards import main_menu_keyboard, subtypes_keyboard, confirm_keyboard, restart_keyboard, back_keyboard
 from app.catalog import DOCUMENTS
 from app.services.payment_service import create_payment, check_payment
 from app.services.pdf_service import generate_pdf
@@ -126,6 +126,7 @@ async def subtype_handler(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f"📄 {subtype['name']}\n\nСтоимость: {subtype['price']} ₽\n\n"
         f"{intro}Ответь на вопросы. Первый вопрос:\n\n{fields[0]['label']}",
+        reply_markup=back_keyboard(),
     )
     await state.set_state(Form.filling)
     await callback.answer()
@@ -145,10 +146,51 @@ async def filling_handler(message: types.Message, state: FSMContext):
     if index < len(fields):
         next_field = fields[index]
         await state.update_data(answers=answers, current_field_index=index)
-        await message.answer(f"{next_field['label']}")
+        await message.answer(f"{next_field['label']}", reply_markup=back_keyboard())
     else:
         await state.update_data(answers=answers, current_field_index=index)
         await _show_summary(message, state)
+
+
+@router.callback_query(F.data == "back_step")
+async def back_step_handler(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    fields = data.get("fields")
+    index = data.get("current_field_index")
+
+    if not fields or index is None:
+        await callback.answer("Диалог сброшен. Начни заново: /start", show_alert=True)
+        return
+    if index == 0:
+        await callback.answer("Это первый вопрос, назад некуда", show_alert=True)
+        return
+
+    index -= 1
+    await state.update_data(current_field_index=index)
+    await callback.message.answer(
+        f"{fields[index]['label']}",
+        reply_markup=back_keyboard(),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "back_last")
+async def back_last_handler(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    fields = data.get("fields")
+
+    if not fields:
+        await callback.answer("Диалог сброшен. Начни заново: /start", show_alert=True)
+        return
+
+    index = len(fields) - 1
+    await state.update_data(current_field_index=index)
+    await state.set_state(Form.filling)
+    await callback.message.answer(
+        f"{fields[index]['label']}",
+        reply_markup=back_keyboard(),
+    )
+    await callback.answer()
 
 
 async def _show_summary(message: types.Message, state: FSMContext):

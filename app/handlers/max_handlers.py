@@ -90,6 +90,10 @@ def _restart_keyboard():
     return [[CallbackButton(payload="menu", text="📁 Другой документ")]]
 
 
+def _back_keyboard():
+    return [[CallbackButton(payload="back_step", text="◀️ Назад")]]
+
+
 # --- Нажатия на кнопки (Payload = разбивка «сообщение кнопки» на поля) ---
 
 class DocPayload(Payload, prefix="doc"):
@@ -129,17 +133,25 @@ class ShowConsentPayload(Payload, prefix="show_consent"):
     pass
 
 
+class BackStepPayload(Payload, prefix="back_step"):
+    pass
+
+
+class BackLastPayload(Payload, prefix="back_last"):
+    pass
+
+
 @router.message_created(Command("start"))
 async def start_handler(update, state: FSMContext):
     await state.clear()
     cleanup_old_pdfs()
-    await update.answer_text(start_text(), keyboard=_main_menu())
+    await update.answer_text(start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
 
 
 @router.message_created(StartButtonFilter())
 async def start_button_handler(update, state: FSMContext):
     await state.clear()
-    await update.answer_text(start_text(), keyboard=_main_menu())
+    await update.answer_text(start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
 
 
 @router.message_created(StateFilter(None))
@@ -148,7 +160,7 @@ async def fallback_handler(update, state: FSMContext):
     # Плюс на любой посторонний текст вне диалога отвечаем меню, чтобы бот не молчал.
     await state.clear()
     if update.text is None:
-        await update.answer_text(start_text(), keyboard=_main_menu())
+        await update.answer_text(start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
     else:
         await update.answer_text(
             "Не понял. Чтобы начать заново, нажми «Начать» или выбери документ в меню.",
@@ -160,7 +172,7 @@ async def fallback_handler(update, state: FSMContext):
 async def bot_started_handler(update: BotStarted, state: FSMContext):
     # Событие bot_started: нажатие «Начать» в веб-версии MAX приходит именно им.
     await state.clear()
-    await update.send_message(text=start_text(), keyboard=_main_menu())
+    await update.send_message(text=start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
 
 
 @router.message_created(Command("terms"))
@@ -272,6 +284,7 @@ async def subtype_handler(update, payload: SubtypePayload, state: FSMContext):
     await update.edit_message(
         f"📄 {subtype['name']}\n\nСтоимость: {subtype['price']} ₽\n\n"
         f"{intro}Ответь на вопросы. Первый вопрос:\n\n{fields[0]['label']}",
+        keyboard=_back_keyboard(),
     )
     await state.set_state(MaxForm.filling)
     await _ack(update)
@@ -293,10 +306,47 @@ async def filling_handler(update, state: FSMContext):
 
     if index < len(fields):
         await state.update_data(answers=answers, current_field_index=index)
-        await update.answer_text(fields[index]["label"])
+        await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
     else:
         await state.update_data(answers=answers, current_field_index=index)
         await _show_summary(update, state)
+
+
+@router.message_callback(StateFilter(MaxForm.filling), BackStepPayload.filter())
+async def back_step_handler(update, state: FSMContext):
+    data = await state.get_data()
+    fields = data.get("fields")
+    index = data.get("current_field_index")
+
+    if not fields or index is None:
+        await update.answer_text("Диалог сброшен. Чтобы начать заново, нажми «Начать».", keyboard=_main_menu())
+        await _ack(update)
+        return
+    if index == 0:
+        await update.callback_answer(text="Это первый вопрос, назад некуда")
+        return
+
+    index -= 1
+    await state.update_data(current_field_index=index)
+    await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+    await _ack(update)
+
+
+@router.message_callback(StateFilter(MaxForm.confirm), BackLastPayload.filter())
+async def back_last_handler(update, state: FSMContext):
+    data = await state.get_data()
+    fields = data.get("fields")
+
+    if not fields:
+        await update.answer_text("Диалог сброшен. Чтобы начать заново, нажми «Начать».", keyboard=_main_menu())
+        await _ack(update)
+        return
+
+    index = len(fields) - 1
+    await state.update_data(current_field_index=index)
+    await state.set_state(MaxForm.filling)
+    await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+    await _ack(update)
 
 
 async def _show_summary(update, state: FSMContext):
@@ -316,6 +366,7 @@ async def _show_summary(update, state: FSMContext):
         summary,
         keyboard=[
             [CallbackButton(payload="pay", text="✅ Оплатить")],
+            [CallbackButton(payload="back_last", text="◀️ Назад")],
             [CallbackButton(payload="menu", text="◀️ Назад к каталогу")],
         ],
     )
