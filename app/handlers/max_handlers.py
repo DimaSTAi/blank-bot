@@ -46,6 +46,22 @@ async def _ack(update):
         logger.debug("Не удалось подтвердить нажатие кнопки")
 
 
+async def _edit_bot(update, message_id: str, text: str, keyboard=None):
+    """Редактируем сообщение бота по id (keyboard=[] — убрать кнопки).
+    Пустые вложения в MAX затирают старые кнопки, поэтому в чате при вопросах
+    остаётся только актуальная клавиатура (кнопка «Назад»)."""
+    try:
+        attachments = await update.build_attachments(base=[], keyboard=keyboard, files=None)
+        await update.bot.edit_message(
+            message_id=message_id,
+            text=text,
+            attachments=attachments or [],
+        )
+    except Exception as e:
+        logger.debug("Редактирование сообщения %s не удалось: %s", message_id, e)
+        await update.answer_text(text, keyboard=keyboard)
+
+
 # --- Клавиатуры (те же названия кнопок, что и в Telegram) ---
 
 def _main_menu():
@@ -286,6 +302,11 @@ async def subtype_handler(update, payload: SubtypePayload, state: FSMContext):
         f"{intro}Ответь на вопросы. Первый вопрос:\n\n{fields[0]['label']}",
         keyboard=_back_keyboard(),
     )
+    try:
+        bot_msg_id = update.unsafe_message.body.mid
+        await state.update_data(bot_msg_id=bot_msg_id)
+    except Exception:
+        logger.debug("Не удалось сохранить id сообщения-вопроса")
     await state.set_state(MaxForm.filling)
     await _ack(update)
 
@@ -306,7 +327,7 @@ async def filling_handler(update, state: FSMContext):
 
     if index < len(fields):
         await state.update_data(answers=answers, current_field_index=index)
-        await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+        await _edit_bot(update, data["bot_msg_id"], fields[index]["label"], keyboard=_back_keyboard())
     else:
         await state.update_data(answers=answers, current_field_index=index)
         await _show_summary(update, state)
@@ -323,12 +344,13 @@ async def back_step_handler(update, state: FSMContext):
         await _ack(update)
         return
     if index == 0:
-        await update.callback_answer(text="Это первый вопрос, назад некуда")
+        await update.answer_text("◀️ Это первый вопрос — назад некуда. Ответь на него текстом.")
+        await _ack(update)
         return
 
     index -= 1
     await state.update_data(current_field_index=index)
-    await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+    await _edit_bot(update, data["bot_msg_id"], fields[index]["label"], keyboard=_back_keyboard())
     await _ack(update)
 
 
@@ -345,7 +367,7 @@ async def back_last_handler(update, state: FSMContext):
     index = len(fields) - 1
     await state.update_data(current_field_index=index)
     await state.set_state(MaxForm.filling)
-    await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+    await _edit_bot(update, data["bot_msg_id"], fields[index]["label"], keyboard=_back_keyboard())
     await _ack(update)
 
 
@@ -362,7 +384,9 @@ async def _show_summary(update, state: FSMContext):
         summary += f"• {field['label']}: {answers.get(field['key'], '-')}\n"
     summary += f"\n💰 Стоимость: {price} ₽\n\nВсё верно?"
 
-    await update.answer_text(
+    await _edit_bot(
+        update,
+        (await state.get_data()).get("bot_msg_id"),
         summary,
         keyboard=[
             [CallbackButton(payload="pay", text="✅ Оплатить")],
