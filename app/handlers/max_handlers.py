@@ -421,6 +421,7 @@ async def pay_handler(update, payload: PayPayload, state: FSMContext):
         payment_id, url = await create_payment(
             amount=price,
             description=f"Бланк-бот: {subtype_name}",
+            return_url="https://max.ru/se14712542_bot",
             metadata={
                 "max_user_id": str(update.callback.user.user_id),
                 "doc_key": doc_key,
