@@ -118,7 +118,12 @@ def _back_keyboard():
     ]
 
 
-# --- Нажатия на кнопки (Payload = разбивка «сообщение кнопки» на поля) ---
+# Нажатие кнопки в старых версиях MAX-клиентов может прийти обычным
+# сообщением с текстом payload — такое нельзя сохранять как ответ юзера.
+PAYLOAD_TEXTS = {
+    "doc:", "subtype:", "back_step", "back_last", "menu", "pay",
+    "check_payment", "show_", "start",
+}
 
 class DocPayload(Payload, prefix="doc"):
     key: str
@@ -320,8 +325,20 @@ async def subtype_handler(update, payload: SubtypePayload, state: FSMContext):
 async def filling_handler(update, state: FSMContext):
     if update.text is None:
         return
+    text = update.text.strip()
+    if text.startswith(PAYLOAD_TEXTS):
+        return  # это служебный payload кнопки, а не ответ юзера
 
     data = await state.get_data()
+    if not data.get("fields"):
+        # память диалога потерялась (перезапуск контейнера)
+        await state.clear()
+        await update.answer_text(
+            "Сессия прервалась (перезапуск бота). Чтобы начать заново, нажми «Начать».",
+            keyboard=_main_menu(),
+        )
+        return
+
     fields = data["fields"]
     answers = data["answers"]
     index = data["current_field_index"]
@@ -412,6 +429,26 @@ async def _show_summary(update, state: FSMContext):
 async def pay_handler(update, payload: PayPayload, state: FSMContext):
     logger.info("MAX: клик «Оплатить»")
     data = await state.get_data()
+
+    old_url = data.get("pay_url")
+    if old_url and data.get("payment_id"):
+        # Повторное нажатие «Оплатить» — не создаём новый платёж, повторяем старую ссылку
+        await update.edit_message(
+            f"💳 Платёж уже создан. Оплатите по ссылке:\n\n{old_url}\n\n"
+            f"После оплаты нажми кнопку «Проверить оплату».",
+            keyboard=[
+                [LinkButton(text="💳 Оплатить в браузере", url=old_url)],
+                [CallbackButton(payload="check_payment", text="🔍 Проверить оплату")],
+            ],
+        )
+        await _ack(update)
+        return
+
+    if not data.get("doc_key"):
+        await update.answer_text("Сессия прервалась. Чтобы начать заново, нажми «Начать».", keyboard=_main_menu())
+        await _ack(update)
+        return
+
     doc_key = data["doc_key"]
     subtype_key = data["subtype_key"]
     price = data["price"]
@@ -428,7 +465,7 @@ async def pay_handler(update, payload: PayPayload, state: FSMContext):
                 "subtype_key": subtype_key,
             },
         )
-        await state.update_data(payment_id=payment_id)
+        await state.update_data(payment_id=payment_id, pay_url=url)
         logger.info("Создан платёж %s для MAX-пользователя %s", payment_id, update.callback.user.user_id)
         await update.edit_message(
             f"💳 Для получения документа оплатите {price} ₽:\n\n{url}\n\n"
@@ -450,9 +487,18 @@ async def check_payment_handler(update, state: FSMContext):
     logger.info("MAX: клик «Проверить оплату»")
     data = await state.get_data()
     payment_id = data.get("payment_id")
-    answers = data["answers"]
-    doc_key = data["doc_key"]
-    subtype_key = data["subtype_key"]
+    answers = data.get("answers")
+    doc_key = data.get("doc_key")
+    subtype_key = data.get("subtype_key")
+
+    if not payment_id or not answers:
+        # Память диалога потерялась (перезапуск контейнера) — платёж уже не привязать
+        await update.answer_text(
+            "Сессия прервалась. Если ты уже оплатил — напиши в поддержку, выдаю документ вручную.",
+            keyboard=_restart_keyboard(),
+        )
+        await _ack(update)
+        return
 
     try:
         status = await check_payment(payment_id)
@@ -478,7 +524,12 @@ async def check_payment_handler(update, state: FSMContext):
                 "и нажми «Проверить оплату» снова.",
             )
         else:
-            await update.answer_text(f"❌ Платёж не прошёл. Статус: {status}. Попробуй оплатить заново.")
+            # Платёж отменён/не прошёл — освобождаем, чтобы «Оплатить» создал новый
+            await state.update_data(payment_id=None, pay_url=None)
+            await update.answer_text(
+                "❌ Платёж не прошёл. Нажми «Оплатить» ещё раз.",
+                keyboard=[[CallbackButton(payload="pay", text="✅ Оплатить")]],
+            )
     except Exception as e:
         logger.exception("Ошибка проверки платежа (MAX): %s", e)
         await update.answer_text(f"⚠️ Ошибка проверки: {e}")

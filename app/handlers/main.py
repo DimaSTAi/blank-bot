@@ -135,6 +135,11 @@ async def subtype_handler(callback: types.CallbackQuery, state: FSMContext):
 @router.message(Form.filling)
 async def filling_handler(message: types.Message, state: FSMContext):
     data = await state.get_data()
+    if not data.get("fields"):
+        await state.clear()
+        await message.answer("Сессия сброшена. Начни заново: /start", reply_markup=main_menu_keyboard())
+        return
+
     fields = data["fields"]
     answers = data["answers"]
     index = data["current_field_index"]
@@ -213,6 +218,9 @@ async def _show_summary(message: types.Message, state: FSMContext):
 @router.callback_query(F.data == "pay")
 async def pay_handler(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    if not data.get("doc_key"):
+        await callback.answer("Сессия сброшена. Начни заново: /start", show_alert=True)
+        return
     doc_key = data["doc_key"]
     subtype_key = data["subtype_key"]
     price = data["price"]
@@ -247,9 +255,13 @@ async def pay_handler(callback: types.CallbackQuery, state: FSMContext):
 async def check_payment_handler(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     payment_id = data.get("payment_id")
-    answers = data["answers"]
-    doc_key = data["doc_key"]
-    subtype_key = data["subtype_key"]
+    answers = data.get("answers")
+    doc_key = data.get("doc_key")
+    subtype_key = data.get("subtype_key")
+
+    if not payment_id or not answers:
+        await callback.answer("Сессия сброшена. Начни заново: /start", show_alert=True)
+        return
 
     try:
         status = await check_payment(payment_id)
@@ -267,6 +279,7 @@ async def check_payment_handler(callback: types.CallbackQuery, state: FSMContext
         elif status in ("pending", "waiting_for_capture"):
             await callback.answer("Платёж ещё обрабатывается. Попробуй через несколько секунд.", show_alert=True)
         else:
+            await state.update_data(payment_id=None)
             await callback.answer(f"Платёж не прошёл. Статус: {status}", show_alert=True)
     except Exception as e:
         await callback.answer(f"Ошибка проверки: {e}", show_alert=True)
