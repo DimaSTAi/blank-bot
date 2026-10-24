@@ -36,6 +36,7 @@ def subtypes_keyboard(doc_key: str) -> InlineKeyboardMarkup:
 def back_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="◀️ Назад", callback_data="back_step")],
+        [InlineKeyboardButton(text="📁 В основное меню", callback_data="main_menu")],
     ])
 
 

@@ -107,7 +107,10 @@ def _restart_keyboard():
 
 
 def _back_keyboard():
-    return [[CallbackButton(payload="back_step", text="◀️ Назад")]]
+    return [
+        [CallbackButton(payload="back_step", text="◀️ Назад")],
+        [CallbackButton(payload="menu", text="📁 В основное меню")],
+    ]
 
 
 # --- Нажатия на кнопки (Payload = разбивка «сообщение кнопки» на поля) ---
