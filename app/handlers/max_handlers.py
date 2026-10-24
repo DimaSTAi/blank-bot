@@ -42,8 +42,8 @@ async def _ack(update):
     """MAX требует обязательный ответ на нажатие кнопки — шлём пустое уведомление."""
     try:
         await update.callback_answer(notification="")
-    except Exception:
-        logger.debug("Не удалось подтвердить нажатие кнопки")
+    except Exception as e:
+        logger.info("Не удалось подтвердить нажатие кнопки: %s", e)
 
 
 async def _save_msg_id(update, state: FSMContext, msg):
@@ -410,6 +410,7 @@ async def _show_summary(update, state: FSMContext):
 
 @router.message_callback(PayPayload.filter())
 async def pay_handler(update, payload: PayPayload, state: FSMContext):
+    logger.info("MAX: клик «Оплатить»")
     data = await state.get_data()
     doc_key = data["doc_key"]
     subtype_key = data["subtype_key"]
@@ -445,6 +446,7 @@ async def pay_handler(update, payload: PayPayload, state: FSMContext):
 
 @router.message_callback(CheckPaymentPayload.filter())
 async def check_payment_handler(update, state: FSMContext):
+    logger.info("MAX: клик «Проверить оплату»")
     data = await state.get_data()
     payment_id = data.get("payment_id")
     answers = data["answers"]
@@ -467,9 +469,13 @@ async def check_payment_handler(update, state: FSMContext):
             )
             await state.clear()
         elif status in ("pending", "waiting_for_capture"):
-            await update.callback_answer(text="Платёж ещё обрабатывается. Попробуй через несколько секунд.")
+            # Всплывающие подсказки в MAX часто не отображаются — пишем в чат
+            await update.answer_text(
+                "⏳ Платёж ещё обрабатывается. Подожди несколько секунд "
+                "и нажми «Проверить оплату» снова.",
+            )
         else:
-            await update.callback_answer(text=f"Платёж не прошёл. Статус: {status}")
+            await update.answer_text(f"❌ Платёж не прошёл. Статус: {status}. Попробуй оплатить заново.")
     except Exception as e:
         logger.exception("Ошибка проверки платежа (MAX): %s", e)
-        await update.callback_answer(text=f"Ошибка проверки: {e}")
+        await update.answer_text(f"⚠️ Ошибка проверки: {e}")
