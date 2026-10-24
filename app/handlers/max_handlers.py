@@ -482,3 +482,16 @@ async def check_payment_handler(update, state: FSMContext):
     except Exception as e:
         logger.exception("Ошибка проверки платежа (MAX): %s", e)
         await update.answer_text(f"⚠️ Ошибка проверки: {e}")
+
+
+@router.message_callback()
+async def orphan_callback_handler(update, state: FSMContext):
+    """Кнопка, на которую никто не отвечает (обычно «Назад» после перезапуска
+    контейнера — память диалогов при этом стирается). Отвечаем подсказкой,
+    а не тишиной."""
+    await _ack(update)
+    await state.clear()
+    await update.answer_text(
+        "Сессия прервалась (перезапуск бота). Чтобы начать заново, нажми «Начать».",
+        keyboard=_main_menu(),
+    )
