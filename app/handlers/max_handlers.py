@@ -46,20 +46,25 @@ async def _ack(update):
         logger.debug("Не удалось подтвердить нажатие кнопки")
 
 
-async def _edit_bot(update, message_id: str, text: str, keyboard=None):
-    """Редактируем сообщение бота по id (keyboard=[] — убрать кнопки).
-    Пустые вложения в MAX затирают старые кнопки, поэтому в чате при вопросах
-    остаётся только актуальная клавиатура (кнопка «Назад»)."""
+async def _save_msg_id(update, state: FSMContext, msg):
+    """Запоминаем id последнего сообщения бота (вопрос/сводка) — чтобы его можно было удалить."""
     try:
-        attachments = await update.build_attachments(base=[], keyboard=keyboard, files=None)
-        await update.bot.edit_message(
-            message_id=message_id,
-            text=text,
-            attachments=attachments or [],
-        )
+        await state.update_data(bot_msg_id=msg.body.mid)
+    except Exception:
+        logger.debug("Не удалось сохранить id сообщения-вопроса")
+
+
+async def _delete_prev(update, state: FSMContext):
+    """Удаляем предыдущее сообщение бота (старый вопрос) — без него чат чистый,
+    переписка идёт естественно: ответ пользователя, ниже новый вопрос."""
+    data = await state.get_data()
+    mid = data.get("bot_msg_id")
+    if not mid:
+        return
+    try:
+        await update.bot.delete_message(message_id=mid)
     except Exception as e:
-        logger.debug("Редактирование сообщения %s не удалось: %s", message_id, e)
-        await update.answer_text(text, keyboard=keyboard)
+        logger.debug("Не удалось удалить сообщение %s: %s", mid, e)
 
 
 # --- Клавиатуры (те же названия кнопок, что и в Telegram) ---
@@ -253,6 +258,7 @@ async def show_legal_handler(update):
 
 @router.message_callback(MenuPayload.filter())
 async def main_menu_handler(update, state: FSMContext):
+    await _delete_prev(update, state)
     await state.clear()
     try:
         await update.edit_message("Выбери документ из каталога:", keyboard=_main_menu())
@@ -300,16 +306,12 @@ async def subtype_handler(update, payload: SubtypePayload, state: FSMContext):
             "Служит доказательством при спорах.\n\n"
         )
 
-    await update.edit_message(
+    msg = await update.answer_text(
         f"📄 {subtype['name']}\n\nСтоимость: {subtype['price']} ₽\n\n"
         f"{intro}Ответь на вопросы. Первый вопрос:\n\n{fields[0]['label']}",
         keyboard=_back_keyboard(),
     )
-    try:
-        bot_msg_id = update.unsafe_message.body.mid
-        await state.update_data(bot_msg_id=bot_msg_id)
-    except Exception:
-        logger.debug("Не удалось сохранить id сообщения-вопроса")
+    await _save_msg_id(update, state, msg)
     await state.set_state(MaxForm.filling)
     await _ack(update)
 
@@ -330,7 +332,9 @@ async def filling_handler(update, state: FSMContext):
 
     if index < len(fields):
         await state.update_data(answers=answers, current_field_index=index)
-        await _edit_bot(update, data["bot_msg_id"], fields[index]["label"], keyboard=_back_keyboard())
+        await _delete_prev(update, state)
+        msg = await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+        await _save_msg_id(update, state, msg)
     else:
         await state.update_data(answers=answers, current_field_index=index)
         await _show_summary(update, state)
@@ -353,7 +357,9 @@ async def back_step_handler(update, state: FSMContext):
 
     index -= 1
     await state.update_data(current_field_index=index)
-    await _edit_bot(update, data["bot_msg_id"], fields[index]["label"], keyboard=_back_keyboard())
+    await _delete_prev(update, state)
+    msg = await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+    await _save_msg_id(update, state, msg)
     await _ack(update)
 
 
@@ -370,7 +376,9 @@ async def back_last_handler(update, state: FSMContext):
     index = len(fields) - 1
     await state.update_data(current_field_index=index)
     await state.set_state(MaxForm.filling)
-    await _edit_bot(update, data["bot_msg_id"], fields[index]["label"], keyboard=_back_keyboard())
+    await _delete_prev(update, state)
+    msg = await update.answer_text(fields[index]["label"], keyboard=_back_keyboard())
+    await _save_msg_id(update, state, msg)
     await _ack(update)
 
 
@@ -387,9 +395,8 @@ async def _show_summary(update, state: FSMContext):
         summary += f"• {field['label']}: {answers.get(field['key'], '-')}\n"
     summary += f"\n💰 Стоимость: {price} ₽\n\nВсё верно?"
 
-    await _edit_bot(
-        update,
-        (await state.get_data()).get("bot_msg_id"),
+    await _delete_prev(update, state)
+    msg = await update.answer_text(
         summary,
         keyboard=[
             [CallbackButton(payload="pay", text="✅ Оплатить")],
@@ -397,6 +404,7 @@ async def _show_summary(update, state: FSMContext):
             [CallbackButton(payload="menu", text="◀️ Назад к каталогу")],
         ],
     )
+    await _save_msg_id(update, state, msg)
     await state.set_state(MaxForm.confirm)
 
 
