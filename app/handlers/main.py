@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from app.states import Form
 from app.keyboards import main_menu_keyboard, subtypes_keyboard, confirm_keyboard, restart_keyboard, back_keyboard
 from app.catalog import DOCUMENTS
-from app.services.payment_service import create_payment, check_payment
+from app.services.payment_service import create_payment, check_payment, new_idempotence_key
 from app.services.pdf_service import generate_pdf
 from app.services.cleanup_service import cleanup_old_pdfs
 from app.legal import start_text, TERMS_TEXT, PRIVACY_TEXT, CONSENT_TEXT, legal_keyboard
@@ -228,6 +228,12 @@ async def pay_handler(callback: types.CallbackQuery, state: FSMContext):
     subtype_name = DOCUMENTS[doc_key]["subtypes"][subtype_key]["name"]
 
     try:
+        idem_key = data.get("idem_key")
+        if not idem_key:
+            # Сохраняем ДО запроса: если ответ потерялся по таймауту,
+            # повторный клик «Оплатить» вернёт тот же платёж по ключу
+            idem_key = new_idempotence_key()
+            await state.update_data(idem_key=idem_key)
         payment_id, url = await create_payment(
             amount=price,
             description=f"Бланк-бот: {subtype_name}",
@@ -260,8 +266,27 @@ async def check_payment_handler(callback: types.CallbackQuery, state: FSMContext
     subtype_key = data.get("subtype_key")
 
     if not payment_id or not answers:
-        await callback.answer("Сессия сброшена. Начни заново: /start", show_alert=True)
-        return
+        # Платёж мог создаться, а ответ потеряться по таймауту — восстанавливаем
+        # его по ключу идемпотентности
+        if not payment_id and answers and doc_key and subtype_key and data.get("idem_key"):
+            try:
+                subtype = DOCUMENTS[doc_key]["subtypes"][subtype_key]
+                payment_id, url = await create_payment(
+                    amount=data["price"],
+                    description=f"Бланк-бот: {subtype['name']}",
+                    metadata={
+                        "telegram_user_id": str(callback.from_user.id),
+                        "doc_key": doc_key,
+                        "subtype_key": subtype_key,
+                    },
+                    idempotence_key=data["idem_key"],
+                )
+                await state.update_data(payment_id=payment_id)
+            except Exception:
+                pass
+        if not payment_id:
+            await callback.answer("Сессия сброшена. Начни заново: /start", show_alert=True)
+            return
 
     try:
         status = await check_payment(payment_id)
@@ -279,7 +304,9 @@ async def check_payment_handler(callback: types.CallbackQuery, state: FSMContext
         elif status in ("pending", "waiting_for_capture"):
             await callback.answer("Платёж ещё обрабатывается. Попробуй через несколько секунд.", show_alert=True)
         else:
-            await state.update_data(payment_id=None)
+            # Платёж отменён/не прошёл — освобождаем, чтобы «Оплатить» создал новый.
+            # Ключ тоже сбрасываем: он навсегда указывает на отменённый платёж
+            await state.update_data(payment_id=None, idem_key=None)
             await callback.answer(f"Платёж не прошёл. Статус: {status}", show_alert=True)
     except Exception as e:
         await callback.answer(f"Ошибка проверки: {e}", show_alert=True)

@@ -16,7 +16,7 @@ from app.catalog import DOCUMENTS
 from app.config import LANDING_URL
 from app.legal import CONSENT_TEXT, PRIVACY_TEXT, TERMS_TEXT, start_text
 from app.services.cleanup_service import cleanup_old_pdfs
-from app.services.payment_service import check_payment, create_payment
+from app.services.payment_service import check_payment, create_payment, new_idempotence_key
 from app.services.pdf_service import generate_pdf
 
 logger = logging.getLogger(__name__)
@@ -458,6 +458,12 @@ async def pay_handler(update, payload: PayPayload, state: FSMContext):
     subtype_name = DOCUMENTS[doc_key]["subtypes"][subtype_key]["name"]
 
     try:
+        idem_key = data.get("idem_key")
+        if not idem_key:
+            # Сохраняем ДО запроса: если ответ потерялся по таймауту,
+            # повторный клик «Оплатить» вернёт тот же платёж по ключу
+            idem_key = new_idempotence_key()
+            await state.update_data(idem_key=idem_key)
         payment_id, url = await create_payment(
             amount=price,
             description=f"Бланк-бот: {subtype_name}",
@@ -467,6 +473,7 @@ async def pay_handler(update, payload: PayPayload, state: FSMContext):
                 "doc_key": doc_key,
                 "subtype_key": subtype_key,
             },
+            idempotence_key=idem_key,
         )
         await state.update_data(payment_id=payment_id, pay_url=url)
         logger.info("Создан платёж %s для MAX-пользователя %s", payment_id, update.callback.user.user_id)
@@ -495,12 +502,32 @@ async def check_payment_handler(update, state: FSMContext):
 
     if not payment_id or not answers:
         # Память диалога потерялась (перезапуск контейнера) — платёж уже не привязать
-        await update.answer_text(
-            "Сессия прервалась. Если ты уже оплатил — напиши в поддержку, выдаю документ вручную.",
-            keyboard=_restart_keyboard(),
-        )
-        await _ack(update)
-        return
+        if not payment_id and answers and doc_key and subtype_key and data.get("idem_key"):
+            # Платёж мог создаться, а ответ потеряться по таймауту —
+            # восстанавливаем его по ключу идемпотентности
+            try:
+                subtype = DOCUMENTS[doc_key]["subtypes"][subtype_key]
+                payment_id, url = await create_payment(
+                    amount=data["price"],
+                    description=f"Бланк-бот: {subtype['name']}",
+                    return_url="https://max.ru/se14712542_bot",
+                    metadata={
+                        "max_user_id": str(update.callback.user.user_id),
+                        "doc_key": doc_key,
+                        "subtype_key": subtype_key,
+                    },
+                    idempotence_key=data["idem_key"],
+                )
+                await state.update_data(payment_id=payment_id, pay_url=url)
+            except Exception as e:
+                logger.exception("Не удалось восстановить платёж по ключу (MAX): %s", e)
+        if not payment_id:
+            await update.answer_text(
+                "Сессия прервалась. Если ты уже оплатил — напиши в поддержку, выдаю документ вручную.",
+                keyboard=_restart_keyboard(),
+            )
+            await _ack(update)
+            return
 
     try:
         status = await check_payment(payment_id)
@@ -526,8 +553,9 @@ async def check_payment_handler(update, state: FSMContext):
                 "и нажми «Проверить оплату» снова.",
             )
         else:
-            # Платёж отменён/не прошёл — освобождаем, чтобы «Оплатить» создал новый
-            await state.update_data(payment_id=None, pay_url=None)
+            # Платёж отменён/не прошёл — освобождаем, чтобы «Оплатить» создал новый.
+            # Ключ тоже сбрасываем: он навсегда указывает на отменённый платёж
+            await state.update_data(payment_id=None, pay_url=None, idem_key=None)
             await update.answer_text(
                 "❌ Платёж не прошёл. Нажми «Оплатить» ещё раз.",
                 keyboard=[[CallbackButton(payload="pay", text="✅ Оплатить")]],

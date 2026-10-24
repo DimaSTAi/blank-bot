@@ -22,7 +22,10 @@ API_URL = "https://api.yookassa.ru/v3/"
 # С сервера Amvera ЮKassa отвечает нестабильно (то 1с, то дольше 20с) —
 # поэтому таймаут + повторные попытки. Ключ идемпотентности один на все
 # попытки, так что повтор не создаст второй платёж.
-TIMEOUT = (5, 20)
+# Скаляр, а не кортеж (5,20): в проде на Amvera кортеж отработал как
+# read=5 (локально тот же код — read=20, причина неясна), из-за этого
+# медленные ответы ЮKassa отваливались. Скаляр однозначен на любой версии.
+TIMEOUT = 25
 ATTEMPTS = 2
 PAUSE = 2  # секунды между попытками
 
@@ -37,6 +40,11 @@ def _warm_up_sync() -> None:
     """Прогрев: первое соединение с ЮKassa устанавливаем при старте бота,
     чтобы первый клиентский клик «Оплатить» не ждал рукопожатия."""
     try:
+        import urllib3
+        logger.info(
+            "Версии HTTP-библиотек: requests %s / urllib3 %s",
+            requests.__version__, urllib3.__version__,
+        )
         r = _session.get(API_URL + "payments", auth=_auth(), timeout=TIMEOUT, params={"limit": "1"})
         logger.info("Прогрев ЮKassa выполнен (статус %s)", r.status_code)
     except Exception as e:
@@ -64,12 +72,26 @@ def _request_with_retry(method: str, path: str, **kwargs) -> dict:
             return r.json()
         except (requests.Timeout, requests.ConnectionError) as e:
             last_exc = e
+            logger.warning("ЮKassa: попытка %d/%d не удалась (%s): %s", attempt, ATTEMPTS, type(e).__name__, e)
             if attempt < ATTEMPTS:
                 time.sleep(PAUSE)
     raise last_exc
 
 
-def _create_payment_sync(amount: int, description: str, return_url: str, metadata: dict) -> tuple[str, str]:
+def new_idempotence_key() -> str:
+    """Ключ идемпотентности: создаём ДО запроса платежа и сохраняем в память
+    диалога. Если ответ ЮKassa потерялся по таймауту, повторный POST с тем
+    же ключом вернёт тот же платёж — двойной оплаты не будет."""
+    return str(uuid.uuid4())
+
+
+def _create_payment_sync(
+    amount: int,
+    description: str,
+    return_url: str,
+    metadata: dict,
+    idempotence_key: str,
+) -> tuple[str, str]:
     body = {
         "amount": {"value": f"{amount:.2f}", "currency": "RUB"},
         "confirmation": {"type": "redirect", "return_url": return_url},
@@ -80,7 +102,7 @@ def _create_payment_sync(amount: int, description: str, return_url: str, metadat
     payment = _request_with_retry(
         "post",
         "payments",
-        headers={"Idempotence-Key": str(uuid.uuid4())},
+        headers={"Idempotence-Key": idempotence_key},
         json=body,
     )
     return payment["id"], payment["confirmation"]["confirmation_url"]
@@ -96,10 +118,14 @@ async def create_payment(
     description: str,
     return_url: str = None,
     metadata: dict = None,
+    idempotence_key: str = None,
 ) -> tuple[str, str]:
-    """Создаёт платёж в ЮKassa. Возвращает (payment_id, ссылка_на_оплату)."""
+    """Создаёт платёж в ЮKassa. Возвращает (payment_id, ссылка_на_оплату).
+    Если передать тот же idempotence_key с теми же данными — вернётся тот же платёж."""
     if return_url is None:
         return_url = YOOKASSA_RETURN_URL
+    if idempotence_key is None:
+        idempotence_key = new_idempotence_key()
 
     payment_id, url = await asyncio.to_thread(
         _create_payment_sync,
@@ -107,6 +133,7 @@ async def create_payment(
         description,
         return_url,
         metadata or {},
+        idempotence_key,
     )
     return payment_id, url
 
