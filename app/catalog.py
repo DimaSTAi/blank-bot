@@ -76,6 +76,7 @@ DOCUMENTS = {
                     {"key": "tech_id_number", "label": "Идентификационный номер"},
                     {"key": "tech_reg_number", "label": "Регистрационный номер"},
                     {"key": "tech_year", "label": "Год выпуска"},
+                    {"key": "tech_mileage", "label": "Пробег или моточасы (если нет — прочерк)"},
                     {"key": "tech_engine_number", "label": "№ двигателя"},
                     {"key": "tech_chassis_number", "label": "№ шасси"},
                     {"key": "tech_body_number", "label": "№ кузова (рамы)"},

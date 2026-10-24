@@ -217,7 +217,8 @@ def _dkp_vehicle_pdf(output_path: str, data: dict, styles) -> str:
         reg = data.get(prefix + "_registration_address", "")
         return [
             f"гр. {name}, проживающий(ая) по адресу {residence}, зарегистрированный(ая) по адресу {reg},",
-            f"Удостоверение личности: дата рождения {birth}, паспорт серии {ps} № {pn}, выдан {pi}, код {pc},",
+            f"дата рождения: {birth},",
+            f"паспорт: серия {ps} № {pn}, выдан {pi}, код подразделения {pc},",
         ]
 
     seller_lines = _party_lines("seller")
@@ -274,12 +275,12 @@ def _dkp_vehicle_pdf(output_path: str, data: dict, styles) -> str:
     ))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
-        "3.2. Продавец гарантирует, что на дату заключения настоящего договора указанное в п. 1 транспортное средство принадлежит ему на законном основании, свободно от права третьих лиц, никому не продано, не заложено, в споре и под арестом (запрещением) не состоит, ограничения в пользовании отсутствуют.",
+        "3.1. Продавец гарантирует, что на дату заключения настоящего договора указанное в п. 1 транспортное средство принадлежит ему на законном основании, свободно от права третьих лиц, никому не продано, не заложено, в споре и под арестом (запрещением) не состоит, ограничения в пользовании отсутствуют.",
         normal
     ))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
-        "3.3. Настоящий договор вступает в силу с момента подписания и составлен в трёх экземплярах, имеющих равную юридическую силу. Настоящий договор действует до полного исполнения сторонами принятых на себя обязательств.",
+        "3.2. Настоящий договор вступает в силу с момента подписания и составлен в трёх экземплярах, имеющих равную юридическую силу. Настоящий договор действует до полного исполнения сторонами принятых на себя обязательств.",
         normal
     ))
     story.append(Spacer(1, 4))
@@ -308,8 +309,8 @@ def _dkp_vehicle_pdf(output_path: str, data: dict, styles) -> str:
     sign_data = [
         [Paragraph("Продавец", bold), Paragraph("Покупатель", bold)],
         [Paragraph("Деньги получил, транспортное средство передал.", normal), Paragraph("Деньги передал, транспортное средство получил.", normal)],
-        [Paragraph("________________ / ________________", normal), Paragraph("________________ / ________________", normal)],
-        [Paragraph(f"(подпись и ФИО)<br/>Тел. {data.get('seller_phone', '')}", small_center), Paragraph(f"(подпись и ФИО)<br/>Тел. {data.get('buyer_phone', '')}", small_center)],
+        [Paragraph(f"________________ / {data.get('seller_name', '')}", normal), Paragraph(f"________________ / {data.get('buyer_name', '')}", normal)],
+        [Paragraph(f"(подпись / Ф.И.О.)<br/>Тел. {data.get('seller_phone', '')}", small_center), Paragraph(f"(подпись / Ф.И.О.)<br/>Тел. {data.get('buyer_phone', '')}", small_center)],
     ]
     sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
     sign_table.setStyle(TableStyle([
@@ -455,7 +456,7 @@ def _dkp_spec_pdf(output_path: str, data: dict, styles) -> str:
     header_data = [
         [
             Paragraph(f"{place}", normal),
-            Paragraph(f"«{day}» {month} 20{year[-2:]} г.", normal),
+            Paragraph(f"«{day}» {month} {year} г.", normal),
         ],
         [
             Paragraph("(населённый пункт)", small_center),
@@ -474,7 +475,7 @@ def _dkp_spec_pdf(output_path: str, data: dict, styles) -> str:
     story.append(header_table)
     story.append(Spacer(1, 8))
 
-    story.append(Paragraph("Договор № __ купли-продажи спецтехники", center_bold))
+    story.append(Paragraph("ДОГОВОР КУПЛИ-ПРОДАЖИ СПЕЦТЕХНИКИ", center_bold))
     story.append(Spacer(1, 12))
 
     # Стороны
@@ -508,6 +509,7 @@ def _dkp_spec_pdf(output_path: str, data: dict, styles) -> str:
         [Paragraph("идентификационный номер", normal), Paragraph(data.get("tech_id_number", ""), normal)],
         [Paragraph("регистрационный номер", normal), Paragraph(data.get("tech_reg_number", ""), normal)],
         [Paragraph("год выпуска", normal), Paragraph(data.get("tech_year", ""), normal)],
+        [Paragraph("пробег / моточасы", normal), Paragraph(data.get("tech_mileage", ""), normal)],
         [Paragraph("№ двигателя", normal), Paragraph(data.get("tech_engine_number", ""), normal)],
         [Paragraph("№ шасси", normal), Paragraph(data.get("tech_chassis_number", ""), normal)],
         [Paragraph("№ кузова (рамы)", normal), Paragraph(data.get("tech_body_number", ""), normal)],
@@ -574,9 +576,9 @@ def _dkp_spec_pdf(output_path: str, data: dict, styles) -> str:
     story.append(Spacer(1, 8))
 
     sign_data = [
-        [Paragraph("Покупатель", bold), Paragraph("Продавец", bold)],
-        [Paragraph("Деньги передал,<br/>спецтехнику получил.", normal), Paragraph("Деньги получил,<br/>спецтехнику передал.", normal)],
-        [Paragraph("________________ / ________________", normal), Paragraph("________________ / ________________", normal)],
+        [Paragraph("Продавец", bold), Paragraph("Покупатель", bold)],
+        [Paragraph("Деньги получил,<br/>спецтехнику передал.", normal), Paragraph("Деньги передал,<br/>спецтехнику получил.", normal)],
+        [Paragraph(f"________________ / {data.get('seller_name', '')}", normal), Paragraph(f"________________ / {data.get('buyer_name', '')}", normal)],
         [Paragraph("(подпись и Ф.И.О. полностью)", small_center), Paragraph("(подпись и Ф.И.О. полностью)", small_center)],
         [Paragraph("«___» __________ 20__ г.<br/>М.П.", small_center), Paragraph("«___» __________ 20__ г.<br/>М.П.", small_center)],
     ]
@@ -616,9 +618,8 @@ def _dkp_thing_pdf(output_path: str, data: dict, styles) -> str:
 
     story = []
 
-    # Заголовок с номером договора и датой
-    story.append(Paragraph("ДОГОВОР № __", center_bold))
-    story.append(Paragraph("купли-продажи товара", center_bold))
+    # Заголовок и дата
+    story.append(Paragraph("ДОГОВОР КУПЛИ-ПРОДАЖИ ТОВАРА", center_bold))
     story.append(Spacer(1, 8))
 
     # Шапка
@@ -748,8 +749,7 @@ def _dkp_thing_pdf(output_path: str, data: dict, styles) -> str:
     # Подписи
     sign_data = [
         [Paragraph("Продавец", bold), Paragraph("Покупатель", bold)],
-        [Paragraph("", normal), Paragraph("", normal)],
-        [Paragraph("________________ / ________________", normal), Paragraph("________________ / ________________", normal)],
+        [Paragraph(f"________________ / {data.get('seller_name', '')}", normal), Paragraph(f"________________ / {data.get('buyer_name', '')}", normal)],
         [Paragraph("(подпись и Ф.И.О. полностью)", small_center), Paragraph("(подпись и Ф.И.О. полностью)", small_center)],
         [Paragraph("«___» __________ 20__ г.<br/>М.П.", small_center), Paragraph("«___» __________ 20__ г.<br/>М.П.", small_center)],
     ]
