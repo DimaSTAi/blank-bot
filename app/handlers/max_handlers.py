@@ -164,13 +164,13 @@ class BackLastPayload(Payload, prefix="back_last"):
 async def start_handler(update, state: FSMContext):
     await state.clear()
     cleanup_old_pdfs()
-    await update.answer_text(start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
+    await update.answer_text(start_text(restart_hint="набери «Начать» или /start"), keyboard=_main_menu())
 
 
 @router.message_created(StartButtonFilter())
 async def start_button_handler(update, state: FSMContext):
     await state.clear()
-    await update.answer_text(start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
+    await update.answer_text(start_text(restart_hint="набери «Начать» или /start"), keyboard=_main_menu())
 
 
 @router.message_created(StateFilter(None))
@@ -179,7 +179,7 @@ async def fallback_handler(update, state: FSMContext):
     # Плюс на любой посторонний текст вне диалога отвечаем меню, чтобы бот не молчал.
     await state.clear()
     if update.text is None:
-        await update.answer_text(start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
+        await update.answer_text(start_text(restart_hint="набери «Начать» или /start"), keyboard=_main_menu())
     else:
         await update.answer_text(
             "Не понял. Чтобы начать заново, нажми «Начать» или выбери документ в меню.",
@@ -191,7 +191,7 @@ async def fallback_handler(update, state: FSMContext):
 async def bot_started_handler(update: BotStarted, state: FSMContext):
     # Событие bot_started: нажатие «Начать» в веб-версии MAX приходит именно им.
     await state.clear()
-    await update.send_message(text=start_text(restart_hint="кнопка «Начать» или /start"), keyboard=_main_menu())
+    await update.send_message(text=start_text(restart_hint="набери «Начать» или /start"), keyboard=_main_menu())
 
 
 @router.message_created(Command("terms"))
