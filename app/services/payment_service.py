@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 import uuid
 
 import requests
@@ -17,11 +18,30 @@ from app.config import (
 )
 
 API_URL = "https://api.yookassa.ru/v3/"
-TIMEOUT = 15  # секунды; без лимита запрос к ЮKassa может висеть вечно
+# С сервера Amvera ЮKassa отвечает нестабильно (то 1с, то дольше 30с) —
+# поэтому таймаут + повторные попытки. Ключ идемпотентности один на все
+# попытки, так что повтор не создаст второй платёж.
+TIMEOUT = (5, 30)
+ATTEMPTS = 3
+PAUSE = 2  # секунды между попытками
 
 
 def _auth() -> tuple[str, str]:
     return YOOKASSA_SHOP_ID, YOOKASSA_SECRET_KEY
+
+
+def _request_with_retry(method: str, path: str, **kwargs) -> dict:
+    last_exc: Exception | None = None
+    for attempt in range(1, ATTEMPTS + 1):
+        try:
+            r = requests.request(method, API_URL + path, auth=_auth(), timeout=TIMEOUT, **kwargs)
+            r.raise_for_status()
+            return r.json()
+        except (requests.Timeout, requests.ConnectionError) as e:
+            last_exc = e
+            if attempt < ATTEMPTS:
+                time.sleep(PAUSE)
+    raise last_exc
 
 
 def _create_payment_sync(amount: int, description: str, return_url: str, metadata: dict) -> tuple[str, str]:
@@ -32,26 +52,18 @@ def _create_payment_sync(amount: int, description: str, return_url: str, metadat
         "description": description,
         "metadata": metadata,
     }
-    r = requests.post(
-        API_URL + "payments",
-        auth=_auth(),
+    payment = _request_with_retry(
+        "post",
+        "payments",
         headers={"Idempotence-Key": str(uuid.uuid4())},
         json=body,
-        timeout=TIMEOUT,
     )
-    r.raise_for_status()
-    payment = r.json()
     return payment["id"], payment["confirmation"]["confirmation_url"]
 
 
 def _find_payment_sync(payment_id: str) -> str:
-    r = requests.get(
-        API_URL + f"payments/{payment_id}",
-        auth=_auth(),
-        timeout=TIMEOUT,
-    )
-    r.raise_for_status()
-    return r.json()["status"]
+    payment = _request_with_retry("get", f"payments/{payment_id}")
+    return payment["status"]
 
 
 async def create_payment(

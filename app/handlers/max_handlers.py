@@ -458,6 +458,7 @@ async def check_payment_handler(update, state: FSMContext):
         if status == "succeeded":
             cleanup_old_pdfs()
             pdf_path = generate_pdf(doc_key, subtype_key, answers)
+            logger.info("MAX: PDF сгенерирован, отправляю в чат")
             await update.edit_message("✅ Оплата прошла! Отправляю твой документ...")
             await update.send_media(
                 media=[FSInputFile.file(pdf_path)],
@@ -467,6 +468,7 @@ async def check_payment_handler(update, state: FSMContext):
                 ),
                 keyboard=_restart_keyboard(),
             )
+            logger.info("MAX: PDF отправлен пользователю")
             await state.clear()
         elif status in ("pending", "waiting_for_capture"):
             # Всплывающие подсказки в MAX часто не отображаются — пишем в чат
