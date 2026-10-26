@@ -92,6 +92,14 @@ def _safe_data(data: dict) -> dict:
     return {k: html.escape(str(v)) for k, v in data.items()}
 
 
+_EMPTY_VALUES = ("прочерк", "-", "нет", "не требуется", "не нужно", "отсутствует", "")
+
+
+def _filled(value: str) -> bool:
+    """True, если значение осмысленное (не прочерк / нет / пусто)."""
+    return bool(value) and value.strip().lower() not in _EMPTY_VALUES
+
+
 def _sign_table(data: dict, left_label: str, left_key: str, right_label: str, right_key: str, styles, left_phone_key: str = None, right_phone_key: str = None):
     left_phone = f"<br/>тел.: {data.get(left_phone_key, '')}" if left_phone_key and data.get(left_phone_key) else ""
     right_phone = f"<br/>тел.: {data.get(right_phone_key, '')}" if right_phone_key and data.get(right_phone_key) else ""
@@ -1055,7 +1063,7 @@ def _rent_transport_pdf(output_path: str, data: dict, styles) -> str:
 
     story.append(Paragraph("4. Срок действия договора", bold))
     story.append(Paragraph(
-        f"4.1. Настоящий договор действует с «{start_day}» {start_month} {start_year} г. по «{end_day}» {end_month} {end_year} г. со дня его подписания.",
+        f"4.1. Настоящий договор действует с «{start_day}» {start_month} {start_year} г. по «{end_day}» {end_month} {end_year} г.",
         normal
     ))
     story.append(Paragraph(
@@ -1090,8 +1098,8 @@ def _rent_transport_pdf(output_path: str, data: dict, styles) -> str:
 
     sign_data = [
         [Paragraph("Арендодатель", bold), Paragraph("Арендатор", bold)],
-        [Paragraph(f"{data.get('landlord_name', '')} ________________", normal), Paragraph(f"{data.get('tenant_name', '')} ________________", normal)],
-        [Paragraph("(Ф.И.О.)                               (подпись)", small_center), Paragraph("(Ф.И.О.)                               (подпись)", small_center)],
+        [Paragraph(f"________________ / {data.get('landlord_name', '')}", normal), Paragraph(f"________________ / {data.get('tenant_name', '')}", normal)],
+        [Paragraph("(подпись / Ф.И.О.)", small_center), Paragraph("(подпись / Ф.И.О.)", small_center)],
     ]
     sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
     sign_table.setStyle(TableStyle([
@@ -1110,7 +1118,7 @@ def _rent_transport_pdf(output_path: str, data: dict, styles) -> str:
 
 
 def _append_inspection_and_signatures(contract_path: str, data: dict) -> str:
-    inspection_path = "C:/Users/Пользователь/Downloads/akt-osmotra-avtomobilya.pdf"
+    inspection_path = os.path.join(os.path.dirname(__file__), "..", "static", "akt-osmotra-avtomobilya.pdf")
     output_path = contract_path
 
     writer = PdfWriter()
@@ -1144,8 +1152,8 @@ def _append_inspection_and_signatures(contract_path: str, data: dict) -> str:
         story.append(Spacer(1, 8))
         sign_data = [
             [Paragraph("Арендодатель", bold), Paragraph("Арендатор", bold)],
-            [Paragraph(f"{data.get('landlord_name', '')} ________________", normal), Paragraph(f"{data.get('tenant_name', '')} ________________", normal)],
-            [Paragraph("(Ф.И.О.)                               (подпись)", small_center), Paragraph("(Ф.И.О.)                               (подпись)", small_center)],
+            [Paragraph(f"________________ / {data.get('landlord_name', '')}", normal), Paragraph(f"________________ / {data.get('tenant_name', '')}", normal)],
+            [Paragraph("(подпись / Ф.И.О.)", small_center), Paragraph("(подпись / Ф.И.О.)", small_center)],
             [Paragraph("", normal), Paragraph("", normal)],
             [Paragraph("Дата: «___» __________ 20__ г.", normal), Paragraph("Дата: «___» __________ 20__ г.", normal)],
         ]
@@ -1305,8 +1313,9 @@ def _rent_flat_pdf(output_path: str, data: dict, styles, daily: bool = False) ->
         "3.1. Содержать арендуемую квартиру в порядке, предусмотренном санитарными, противопожарными и иными установленными действующими законодательством РФ нормами.",
         normal
     ))
+    notice_text = "за одни сутки" if daily else "не менее чем за 30 дней"
     story.append(Paragraph(
-        "3.2. О предстоящем освобождении снимаемой в аренду квартиры известить Арендодателя не менее чем за 30 дней.",
+        f"3.2. О предстоящем освобождении снимаемого в аренду жилого помещения известить Арендодателя {notice_text}.",
         normal
     ))
     story.append(Paragraph(
@@ -1349,8 +1358,9 @@ def _rent_flat_pdf(output_path: str, data: dict, styles, daily: bool = False) ->
             f"4.3. При подписании договора Нанимателем вносится Арендодателю оплата за месяц вперёд в размере {data.get('rent_amount', '')} руб., а также залоговая сумма {data.get('deposit', '')} руб., которая возвращается Нанимателю при выезде его из квартиры.",
             normal
         ))
+    last_calc_point = "4.3." if daily else "4.4."
     story.append(Paragraph(
-        "4.4. Размер арендной платы остаётся неизменным в течение всего срока действия договора.",
+        f"{last_calc_point} Размер арендной платы остаётся неизменным в течение всего срока действия договора.",
         normal
     ))
 
@@ -1385,8 +1395,8 @@ def _rent_flat_pdf(output_path: str, data: dict, styles, daily: bool = False) ->
 
     sign_data = [
         [Paragraph("Арендодатель:", bold), Paragraph("Наниматель:", bold)],
-        [Paragraph(f"{data.get('landlord_name', '')} ________________", normal), Paragraph(f"{data.get('tenant_name', '')} ________________", normal)],
-        [Paragraph("(Ф.И.О.)                               (подпись)", small_center), Paragraph("(Ф.И.О.)                               (подпись)", small_center)],
+        [Paragraph(f"________________ / {data.get('landlord_name', '')}", normal), Paragraph(f"________________ / {data.get('tenant_name', '')}", normal)],
+        [Paragraph("(подпись / Ф.И.О.)", small_center), Paragraph("(подпись / Ф.И.О.)", small_center)],
     ]
     sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
     sign_table.setStyle(TableStyle([
@@ -1426,7 +1436,7 @@ def _rent_garage_pdf(output_path: str, data: dict, styles) -> str:
     period_label_plural = "суток" if is_daily else "месяцев"
 
     deposit = data.get("deposit", "").strip()
-    has_deposit = deposit and deposit != "прочерк" and deposit != "-"
+    has_deposit = _filled(deposit)
 
     story = []
 
@@ -1554,8 +1564,8 @@ def _rent_garage_pdf(output_path: str, data: dict, styles) -> str:
 
     sign_data = [
         [Paragraph("Арендодатель:", bold), Paragraph("Арендатор:", bold)],
-        [Paragraph(f"{data.get('landlord_name', '')} ________________", normal), Paragraph(f"{data.get('tenant_name', '')} ________________", normal)],
-        [Paragraph("(Ф.И.О.)                               (подпись)", small_center), Paragraph("(Ф.И.О.)                               (подпись)", small_center)],
+        [Paragraph(f"________________ / {data.get('landlord_name', '')}", normal), Paragraph(f"________________ / {data.get('tenant_name', '')}", normal)],
+        [Paragraph("(подпись / Ф.И.О.)", small_center), Paragraph("(подпись / Ф.И.О.)", small_center)],
     ]
     sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
     sign_table.setStyle(TableStyle([
@@ -1599,7 +1609,7 @@ def _receipt_debt_pdf(output_path: str, data: dict, styles) -> str:
     city = data.get("city", "")
 
     interest_amount = data.get('interest_amount', '').strip()
-    has_interest = interest_amount and interest_amount not in ('прочерк', '-', '')
+    has_interest = _filled(interest_amount)
 
     def _person_text(prefix):
         name = data.get(prefix + "_name", "")
@@ -1730,7 +1740,7 @@ def _receipt_return_pdf(output_path: str, data: dict, styles) -> str:
     story.append(Spacer(1, 16))
 
     interest_amount = data.get('interest_amount', '').strip()
-    has_interest = interest_amount and interest_amount not in ('прочерк', '-', '')
+    has_interest = _filled(interest_amount)
 
     story.append(Paragraph(
         f"Я, {_person_text('lender')} (далее — Займодавец), подтверждаю, что получил(а) от {_person_text('borrower')} (далее — Заёмщик) денежные средства в размере {data.get('amount', '')} ({data.get('amount_words', '')}) рублей в счёт исполнения обязательств по расписке.",
@@ -1788,7 +1798,7 @@ def _claim_product_pdf(output_path: str, city: str, date: str, data: dict, style
     # Шапка: кому и от кого
     story.append(Paragraph(f"Кому: {data.get('organization_name', '')}", normal))
     story.append(Spacer(1, 12))
-    story.append(Paragraph(f"От: {data.get('claimant_name', '')}", normal))
+    story.append(Paragraph(f"От: {data.get('claimant_name', '')}, адрес: {data.get('claimant_address', '')}", normal))
     story.append(Spacer(1, 24))
 
     # Заголовок
@@ -1799,7 +1809,7 @@ def _claim_product_pdf(output_path: str, city: str, date: str, data: dict, style
     purchase_place = data.get("purchase_place", "")
     purchase_date = data.get("purchase_date", "")
     story.append(Paragraph(
-        f"Мной «{purchase_date}» {purchase_place} у Вас был приобретен товар, а именно: "
+        f"Мной «{purchase_date}» в {purchase_place} у Вас был приобретен товар, а именно: "
         f"{data.get('product_name', '')}.",
         normal,
     ))
@@ -1814,8 +1824,8 @@ def _claim_product_pdf(output_path: str, city: str, date: str, data: dict, style
     story.append(Paragraph(f"Прошу: {data.get('demands', '')}.", normal))
     story.append(Spacer(1, 24))
 
-    attachments = data.get("attachments", "")
-    if attachments and attachments.lower() not in ("прочерк", "-", ""):
+    attachments = data.get("attachments", "").strip()
+    if _filled(attachments):
         story.append(Paragraph(f"Приложение: {attachments} на (___) листах.", normal))
         story.append(Spacer(1, 36))
     else:
@@ -1824,7 +1834,7 @@ def _claim_product_pdf(output_path: str, city: str, date: str, data: dict, style
 
     # Подпись заявителя
     sign_data = [
-        [Paragraph(f"Дата: {date}", normal), Paragraph("Подпись: ________________", normal)],
+        [Paragraph(f"Дата: {date}", normal), Paragraph(f"Подпись: ________________ / {data.get('claimant_name', '')}", normal)],
     ]
     sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
     sign_table.setStyle(TableStyle([
@@ -2042,6 +2052,7 @@ def _act_goods_transfer_pdf(output_path: str, data: dict, styles) -> str:
 
     # Таблица товара
     table_header = ["№", "Наименование", "Ед.<br/>изм.", "Кол-<br/>во", "Примечание<br/>комплектность", "Цена за<br/>ед., руб.", "НДС", "Стоимость,<br/>руб."]
+    vat = data.get("product_vat", "").strip()
     table_row = [
         "1",
         data.get("product_name", ""),
@@ -2049,7 +2060,7 @@ def _act_goods_transfer_pdf(output_path: str, data: dict, styles) -> str:
         data.get("product_quantity", ""),
         data.get("product_assortment", ""),
         data.get("product_price", ""),
-        data.get("product_vat", ""),
+        vat if _filled(vat) else "—",
         data.get("product_total", ""),
     ]
     table_data = [
@@ -2076,8 +2087,9 @@ def _act_goods_transfer_pdf(output_path: str, data: dict, styles) -> str:
         bold
     ))
     story.append(Spacer(1, 6))
+    notes = data.get("transfer_notes", "").strip()
     story.append(Paragraph(
-        f"Примечание / претензии: {data.get('transfer_notes', 'претензий не имеется')}",
+        f"Примечание / претензии: {notes if _filled(notes) else 'претензий не имеется'}",
         normal
     ))
     story.append(Spacer(1, 8))
@@ -2093,7 +2105,7 @@ def _act_goods_transfer_pdf(output_path: str, data: dict, styles) -> str:
     sign_data = [
         [Paragraph("Продавец", bold), Paragraph("Покупатель", bold)],
         [Paragraph("Товар передал", normal), Paragraph("Товар принял", normal)],
-        [Paragraph("________________ / ________________", normal), Paragraph("________________ / ________________", normal)],
+        [Paragraph(f"________________ / {data.get('seller_name', '')}", normal), Paragraph(f"________________ / {data.get('buyer_name', '')}", normal)],
         [Paragraph("(подпись и Ф.И.О. полностью)", small_center), Paragraph("(подпись и Ф.И.О. полностью)", small_center)],
         [Paragraph("«___» __________ 20__ г.<br/>М.П.", small_center), Paragraph("«___» __________ 20__ г.<br/>М.П.", small_center)],
     ]

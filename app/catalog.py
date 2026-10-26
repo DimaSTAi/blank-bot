@@ -392,6 +392,7 @@ DOCUMENTS = {
                     {"key": "date", "label": "Дата составления (например: 05.07.2026)"},
                     {"key": "organization_name", "label": "Кому (название организации или ФИО ИП)"},
                     {"key": "claimant_name", "label": "От кого (ФИО покупателя)"},
+                    {"key": "claimant_address", "label": "Адрес заявителя (город, улица, дом, квартира)"},
                     {"key": "purchase_place", "label": "Город покупки"},
                     {"key": "purchase_date", "label": "Дата покупки"},
                     {"key": "product_name", "label": "Наименование товара"},
