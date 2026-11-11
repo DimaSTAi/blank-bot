@@ -1,11 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from app.catalog import DOCUMENTS
+from app.catalog import DOCUMENTS, ordered_documents
 from app.config import LANDING_URL
 
 
 def main_menu_keyboard() -> InlineKeyboardMarkup:
     buttons = []
-    for key, doc in DOCUMENTS.items():
+    for key, doc in ordered_documents():
         buttons.append([InlineKeyboardButton(
             text=f"{doc['icon']} {doc['name']}",
             callback_data=f"doc:{key}"

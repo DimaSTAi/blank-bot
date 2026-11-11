@@ -8,6 +8,8 @@ from app.config import (
     SERVICES_PRICE,
 )
 
+DOCUMENT_ORDER = ["dkp", "rent", "services", "gift", "claim", "receipt", "act"]
+
 DOCUMENTS = {
     "dkp": {
         "icon": "🚗",
@@ -434,3 +436,8 @@ DOCUMENTS = {
         },
     },
 }
+
+
+def ordered_documents():
+    """Документы в порядке меню (см. DOCUMENT_ORDER), а не в порядке словаря."""
+    return [(key, DOCUMENTS[key]) for key in DOCUMENT_ORDER]

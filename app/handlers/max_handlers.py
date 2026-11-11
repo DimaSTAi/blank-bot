@@ -12,7 +12,7 @@ from maxo.types.bot_started import BotStarted
 from maxo.types.link_button import LinkButton
 from maxo.utils.upload_media import FSInputFile
 
-from app.catalog import DOCUMENTS
+from app.catalog import DOCUMENTS, ordered_documents
 from app.config import LANDING_URL
 from app.legal import CONSENT_TEXT, PRIVACY_TEXT, TERMS_TEXT, start_text
 from app.services.cleanup_service import cleanup_old_pdfs
@@ -71,7 +71,7 @@ async def _delete_prev(update, state: FSMContext):
 
 def _main_menu():
     rows = []
-    for key, doc in DOCUMENTS.items():
+    for key, doc in ordered_documents():
         rows.append([CallbackButton(payload=f"doc:{key}", text=f"{doc['icon']} {doc['name']}")])
     rows.append([CallbackButton(payload="show_legal", text="📄 Оферта / Политика / Согласие")])
     rows.append([LinkButton(text="🌐 Наш сайт", url=LANDING_URL)])
