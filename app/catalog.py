@@ -5,6 +5,7 @@ from app.config import (
     CLAIM_PRICE,
     ACT_PRICE,
     GIFT_PRICE,
+    SERVICES_PRICE,
 )
 
 DOCUMENTS = {
@@ -377,6 +378,35 @@ DOCUMENTS = {
                     {"key": "donee_passport_number", "label": "Номер паспорта одаряемого"},
                     {"key": "donee_passport_issued", "label": "Кем и когда выдан паспорт одаряемого"},
                     {"key": "gift_name", "label": "Что дарится (наименование)"},
+                ],
+            },
+        },
+    },
+    "services": {
+        "icon": "🤝",
+        "name": "Договор оказания услуг",
+        "subtypes": {
+            "services_default": {
+                "name": "Стандартный",
+                "price": SERVICES_PRICE,
+                "fields": [
+                    {"key": "city", "label": "Город составления"},
+                    {"key": "date", "label": "Дата составления (например: 05.07.2026)"},
+                    {"key": "executor_name", "label": "Исполнитель — ФИО или название организации"},
+                    {"key": "executor_passport_series", "label": "Серия паспорта исполнителя (если организация — прочерк)"},
+                    {"key": "executor_passport_number", "label": "Номер паспорта исполнителя"},
+                    {"key": "executor_passport_issued", "label": "Кем и когда выдан паспорт исполнителя"},
+                    {"key": "executor_address", "label": "Адрес исполнителя"},
+                    {"key": "customer_name", "label": "Заказчик — ФИО или название организации"},
+                    {"key": "customer_passport_series", "label": "Серия паспорта заказчика (если организация — прочерк)"},
+                    {"key": "customer_passport_number", "label": "Номер паспорта заказчика"},
+                    {"key": "customer_passport_issued", "label": "Кем и когда выдан паспорт заказчика"},
+                    {"key": "customer_address", "label": "Адрес заказчика"},
+                    {"key": "services_list", "label": "Перечень услуг (что именно делает исполнитель)"},
+                    {"key": "term", "label": "Срок оказания услуг (например: с 01 по 30 августа 2026 г.)"},
+                    {"key": "price", "label": "Цена договора (руб., только цифрами)"},
+                    {"key": "price_words", "label": "Цена прописью"},
+                    {"key": "payment_method", "label": "Порядок оплаты (напишите: счёт — на расчётный счёт исполнителя; перевод — банковский перевод)"},
                 ],
             },
         },

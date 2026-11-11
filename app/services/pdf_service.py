@@ -164,6 +164,8 @@ def generate_pdf(doc_key: str, subtype_key: str, data: dict) -> str:
         return _act_default_pdf(output_path, safe, styles)
     if doc_key == "gift" and subtype_key == "gift_default":
         return _gift_default_pdf(output_path, city, date, safe, styles)
+    if doc_key == "services" and subtype_key == "services_default":
+        return _services_default_pdf(output_path, city, date, safe, styles)
 
     return _fallback_pdf(doc_key, subtype_key, data)
 
@@ -423,6 +425,141 @@ def _gift_default_pdf(output_path: str, city: str, date: str, data: dict, styles
     sign_data = [
         [Paragraph("Даритель:", bold), Paragraph("Одаряемый:", bold)],
         [Paragraph(f"{data.get('donor_name', '')} ________________", normal), Paragraph(f"{data.get('donee_name', '')} ________________", normal)],
+        [Paragraph("(подпись / Ф.И.О.)", small_center), Paragraph("(подпись / Ф.И.О.)", small_center)],
+    ]
+    sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
+    sign_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 1),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+    ]))
+    story.append(sign_table)
+
+    doc.build(story)
+    return output_path
+
+
+def _services_default_pdf(output_path: str, city: str, date: str, data: dict, styles) -> str:
+    doc = SimpleDocTemplate(output_path, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
+
+    normal = ParagraphStyle(name="ArialSvc", fontName="Arial", fontSize=10.5, leading=14, alignment=0)
+    bold = ParagraphStyle(name="ArialSvcBold", fontName="ArialBold", fontSize=10.5, leading=14, alignment=0)
+    center_bold = ParagraphStyle(name="ArialSvcBoldCenter", fontName="ArialBold", fontSize=13, leading=16, alignment=1)
+    small_center = ParagraphStyle(name="ArialSvcSmallCenter", fontName="Arial", fontSize=8.5, leading=10, alignment=1, textColor=colors.grey)
+
+    day, month, year = _format_date(date)
+
+    def _party_text(prefix):
+        name = data.get(prefix + "_name", "")
+        ps = data.get(prefix + "_passport_series", "")
+        pn = data.get(prefix + "_passport_number", "")
+        pi = data.get(prefix + "_passport_issued", "")
+        passport = f", паспорт: серия {ps} № {pn}, выдан {pi}" if _filled(ps) or _filled(pn) else ""
+        return f"{name}{passport}"
+
+    raw_payment = data.get("payment_method", "").strip().lower()
+    if raw_payment.startswith("счет") or raw_payment.startswith("счёт"):
+        payment = "посредством банковского перевода на расчётный счёт, указанный Исполнителем"
+    else:
+        payment = "посредством банковского перевода"
+
+    story = []
+
+    story.append(Paragraph("ДОГОВОР ОКАЗАНИЯ УСЛУГ", center_bold))
+    story.append(Spacer(1, 12))
+
+    header_table = Table(
+        [[Paragraph(f"г. {city}", normal), Paragraph(""), Paragraph(f"«{day}» {month} {year} г.", normal)]],
+        colWidths=[3 * cm, 10 * cm, 4 * cm],
+    )
+    header_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 0),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 16))
+
+    story.append(Paragraph(
+        f"{_party_text('executor')}, именуемый(ая) в дальнейшем «Исполнитель», с одной стороны, и "
+        f"{_party_text('customer')}, именуемый(ая) в дальнейшем «Заказчик», с другой стороны, "
+        "заключили настоящий договор о нижеследующем:",
+        normal
+    ))
+    story.append(Spacer(1, 8))
+
+    story.append(Paragraph("1. Предмет договора", bold))
+    story.append(Paragraph(
+        f"1.1. По настоящему договору Исполнитель обязуется по заданию Заказчика оказать услуги: "
+        f"{data.get('services_list', '')}.",
+        normal
+    ))
+    story.append(Paragraph(
+        "1.2. Заказчик обязуется оплатить оказанные услуги в порядке, предусмотренном настоящим договором.",
+        normal
+    ))
+    story.append(Paragraph(
+        f"1.3. Исполнитель обязуется оказать услуги {data.get('term', '').rstrip('. ')}.",
+        normal
+    ))
+
+    story.append(Paragraph("2. Права и обязанности сторон", bold))
+    story.append(Paragraph(
+        "2.1. Исполнитель обязуется оказать услуги в полном объёме, надлежащего качества и в срок, указанный в п. 1.3 настоящего договора.",
+        normal
+    ))
+    story.append(Paragraph(
+        "2.2. Заказчик обязан оплатить работу (услуги) в порядке и на условиях настоящего договора в течение установленного срока с момента выполнения работ (оказания услуг).",
+        normal
+    ))
+    story.append(Paragraph(
+        "2.3. Исполнитель вправе самостоятельно определять способы оказания работ (услуг), при этом Исполнитель не вправе изменять его детализацию.",
+        normal
+    ))
+
+    story.append(Paragraph("3. Цена договора и порядок расчётов", bold))
+    story.append(Paragraph(
+        f"3.1. Цена настоящего договора составляет: {data.get('price', '')} ({data.get('price_words', '')}).",
+        normal
+    ))
+    story.append(Paragraph(
+        f"3.2. Оплата по настоящему договору производится {payment}.",
+        normal
+    ))
+
+    story.append(Paragraph("4. Ответственность сторон", bold))
+    story.append(Paragraph(
+        "4.1. За нарушение срока оказания услуг, указанного в п. 1.3 настоящего договора, виновная сторона уплачивает пеню в размере 0,5 % от суммы договора за каждый день просрочки.",
+        normal
+    ))
+    story.append(Paragraph(
+        "4.2. Меры ответственности сторон, не предусмотренные настоящим договором, применяются в соответствии с нормами действующего законодательства, действующими на территории Российской Федерации.",
+        normal
+    ))
+    story.append(Paragraph(
+        "4.3. Уплата неустойки не освобождает Исполнителя от выполнения возложенных им по договору обязательств или устранения нарушений.",
+        normal
+    ))
+
+    story.append(Paragraph("5. Порядок разрешения споров", bold))
+    story.append(Paragraph(
+        "5.1. Споры и разногласия, которые могут возникнуть при исполнении настоящего договора, будут по возможности разрешаться путём переговоров между сторонами.",
+        normal
+    ))
+    story.append(Paragraph(
+        "5.2. В случае невозможности разрешения спора путём переговоров и после реализации предварительных мер разрешения споров, стороны обращаются в судебные инстанции согласно действующему законодательству.",
+        normal
+    ))
+
+    story.append(Paragraph("6. Адреса и реквизиты сторон", bold))
+    sign_data = [
+        [Paragraph("Заказчик:", bold), Paragraph("Исполнитель:", bold)],
+        [Paragraph(f"{data.get('customer_name', '')} ________________", normal), Paragraph(f"{data.get('executor_name', '')} ________________", normal)],
         [Paragraph("(подпись / Ф.И.О.)", small_center), Paragraph("(подпись / Ф.И.О.)", small_center)],
     ]
     sign_table = Table(sign_data, colWidths=[8.35 * cm, 8.35 * cm])
