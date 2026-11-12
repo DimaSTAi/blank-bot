@@ -146,6 +146,23 @@ h2::after {
 @media (min-width: 1560px) {
     .side-visual { display: block; }
 }
+.hero-strip { display: contents; }
+@media (max-width: 1559.98px) {
+    .hero-strip {
+        display: flex;
+        gap: 1rem;
+        margin: 1.8rem 0 0;
+    }
+    .side-visual {
+        display: block;
+        position: static;
+        width: 50%;
+        height: 170px;
+        margin: 0;
+        animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s both;
+    }
+    .side-visual img { object-position: center 35%; }
+}
 
 /* ---------- hero ---------- */
 .hero {
